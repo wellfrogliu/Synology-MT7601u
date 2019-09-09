@@ -1,5 +1,5 @@
 # Synology-MT7601u
-
+### please give a star, if it is usefull! thank you!
 this is mt7601u wifi for Synology DS918+, DSM 6.2.1, linux kernel 4.4.59+.
 
 # using
