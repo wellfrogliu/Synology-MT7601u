@@ -1,0 +1,3 @@
+ifeq ($(CONFIG_SYNO_LSP_ARMADA_17_04_02), y)
+obj-$(CONFIG_MTD_SPINAND_GD5F) += gd5f_spinand.o
+endif # CONFIG_SYNO_LSP_ARMADA_17_04_02

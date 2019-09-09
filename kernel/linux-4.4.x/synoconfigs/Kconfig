@@ -1,0 +1,13 @@
+menuconfig SYNO_FEATURES
+	bool "Synology Enhancement Features"
+
+if SYNO_FEATURES
+
+source "synoconfigs/Kconfig.platform"
+source "synoconfigs/Kconfig.basic"
+source "synoconfigs/Kconfig.network"
+source "synoconfigs/Kconfig.devices"
+source "synoconfigs/Kconfig.fs"
+source "synoconfigs/Kconfig.misc"
+
+endif #SYNO_FEATURES

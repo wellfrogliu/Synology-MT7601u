@@ -1,0 +1,87 @@
+* Marvell MVEBU SATA PHY
+
+Power control for the SATA phy found on Marvell MVEBU SoCs.
+
+This document extends the binding described in phy-bindings.txt
+
+Required properties :
+
+ - reg		   : Offset and length of the register set for the SATA device
+ - compatible	   : Should be "marvell,mvebu-sata-phy"
+ - clocks	   : phandle of clock and specifier that supplies the device
+ - clock-names	   : Should be "sata"
+
+Example:
+		sata-phy@84000 {
+			compatible = "marvell,mvebu-sata-phy";
+			reg = <0x84000 0x0334>;
+			clocks = <&gate_clk 15>;
+			clock-names = "sata";
+			#phy-cells = <0>;
+			status = "ok";
+		};
+
+Armada 375 USB cluster
+----------------------
+
+Armada 375 comes with an USB2 host and device controller and an USB3
+controller. The USB cluster control register allows to manage common
+features of both USB controllers.
+
+Required properties:
+
+- compatible: "marvell,armada-375-usb-cluster"
+- reg: Should contain usb cluster register location and length.
+- #phy-cells : from the generic phy bindings, must be 1. Possible
+values are 1 (USB2), 2 (USB3).
+
+Example:
+		usbcluster: usb-cluster@18400 {
+			compatible = "marvell,armada-375-usb-cluster";
+			reg = <0x18400 0x4>;
+			#phy-cells = <1>
+		};
+
+Armada 3700 UTMI PHY
+----------------------
+Armada 3700 comes with two UTMI PHYs for USB2.
+
+Required Properties:
+
+- compatible: "marvell,armada-3700-utmi-phy"
+- reg: Offset and length of the register set for the UTMI PHY
+- utmi-port: The port utmi phy connected to
+- #phy-cells: Standard property (Documentation: phy-bindings.txt) Should be 0.
+
+Example:
+UTMI PHY Node:
+============
+		utmi_usb32: utmi@5d000 {
+			compatible = "marvell,armada-3700-utmi-phy";
+			reg = <0x5d000 0x1000>;
+			utmi-port = <0>;
+			#phy-cells = <0>;
+			status = "okay";
+		};
+
+		utmi_usb2: utmi@5f000 {
+			compatible = "marvell,armada-3700-utmi-phy";
+			reg = <0x5f000 0x1000>;
+			utmi-port = <3>;
+			#phy-cells = <0>;
+			status = "okay";
+		};
+
+UTMI PHY consumer:
+=============
+		usb@5e000 {
+			status = "okay";
+			phys = <&utmi_usb2>;
+			phy-names = "usb";
+		};
+
+		udc@54100 {
+			status = "okay";
+			phys = <&utmi_usb32>;
+			phy-names = "usb";
+		};

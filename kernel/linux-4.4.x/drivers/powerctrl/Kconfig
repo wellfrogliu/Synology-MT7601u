@@ -1,0 +1,26 @@
+
+menu "Power Control"
+
+config POWER_CONTROL
+    bool "Power Control Support"
+    default n
+
+
+config POWER_CONTROL_DEBUGFS
+    bool "DebugFs fpr Power Control"
+    depends on POWER_CONTROL
+    default n
+
+
+config POWER_CONTROL_RTD129X
+    bool "Power Control for RTD192x"
+    depends on POWER_CONTROL
+    default n
+
+
+config POWER_CONTROL_RTD129X_DEBUGFS
+    bool "DebugFs for RTD192x Power Control"
+    depends on POWER_CONTROL_RTD129X
+    default n
+
+endmenu

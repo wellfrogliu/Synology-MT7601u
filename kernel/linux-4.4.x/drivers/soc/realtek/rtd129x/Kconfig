@@ -1,0 +1,38 @@
+comment "RTD129X Device Drivers"
+
+menu "RTD129X Device Drivers"
+
+config RTK_SB2_MEM_TRASH_MONITOR
+	bool "Memory trash monitor"
+	default n
+	help
+	  Enable helper functions for memory trash detection. If unsure, say N.
+
+config RTK_RBUS_BARRIER
+	bool "R-bus barrier"
+	depends on RTK_MEM_REMAP
+	default y
+	help
+	  Enable helper functions for R-bus barrier. If unsure, say N.
+
+config RTK_MEM_REMAP
+	bool "Memory remap"
+	default y
+	help
+	  Enable helper functions for static ioremap. If unsure, say N.
+
+source "drivers/soc/realtek/rtd129x/rtk_ve/Kconfig"
+source "drivers/soc/realtek/rtd129x/irda/Kconfig"
+source "drivers/soc/realtek/rtd129x/rpc/Kconfig"
+endmenu #RTD129X Device Drivers
+
+menu "Realtek NAS support"
+       depends on ARCH_RTD129X
+ 
+config SENDFILE_PATCH
+       bool "Reverse sendfile patch"
+       default n
+       help
+       Use patched sendfile syscall to improve write performance on NAS.
+
+endmenu

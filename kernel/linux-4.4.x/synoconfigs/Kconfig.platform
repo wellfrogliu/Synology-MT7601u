@@ -1,0 +1,107 @@
+menu "Platform Selection"
+
+config SYNO_X64
+	bool
+	default y
+	depends on X86_64
+
+config SYNO_SELECT_PLATFORM
+	def_bool y
+choice
+	prompt "Synology platform"
+
+config SYNO_BROMOLOW
+	bool "Intel-Bromolow"
+	depends on X86_64
+
+config SYNO_GRANTLEY
+	bool "Intel Grantley"
+	depends on X86_64
+
+config SYNO_AVOTON
+	bool "Intel-Avoton"
+	depends on X86_64
+
+config SYNO_BRASWELL
+	bool "Intel-Braswell"
+	depends on X86_64
+
+config SYNO_APOLLOLAKE
+	bool "Intel-Apollolake"
+	depends on X86_64
+
+config SYNO_KVMX64
+	bool "KVM X64 Virtual machine"
+	depends on X86_64
+
+config SYNO_BROADWELL
+	bool "Intel-Broadwell"
+	depends on X86_64
+
+config SYNO_DENVERTON
+	bool "Intel-Denverton"
+	depends on X86_64
+
+config SYNO_DOCKERX64
+	bool "Docker X64 Virtual machine"
+	depends on X86_64
+
+config SYNO_RTD129X
+	bool "realtek rtd1296"
+	depends on ARM64
+	select SYNO_LSP_RTD129X
+
+config SYNO_ARMADA37XX
+	bool "Marvell armada37xx"
+	depends on ARM64 && ARCH_MVEBU
+	select SYNO_LSP_ARMADA
+
+config SYNO_PURLEY
+	bool "Intel Purley"
+	depends on X86_64
+
+config SYNO_COFFEELAKE
+	bool "Intel Coffee Lake"
+	depends on X86_64
+
+endchoice
+
+config SYNO_LSP_ARMADA
+	bool "Apply Marvell armada LSP"
+	depends on ARM64 && ARCH_MVEBU
+
+config SYNO_LSP_ARMADA_16_12
+	bool "Apply Marvell armada LSP devel-16.12"
+	depends on SYNO_LSP_ARMADA
+	default y
+
+config SYNO_LSP_ARMADA_17_02_02
+	bool "Apply Marvell armada LSP devel-17.02.02"
+	depends on SYNO_LSP_ARMADA && SYNO_LSP_ARMADA_16_12
+	default y
+
+config SYNO_LSP_ARMADA_17_04_02
+	bool "Apply Marvell armada LSP devel-17.04.02"
+	depends on SYNO_LSP_ARMADA && SYNO_LSP_ARMADA_16_12 && SYNO_LSP_ARMADA_17_02_02
+	default y
+
+config SYNO_LSP_ARMADA_17_06_01
+	bool "Apply Marvell armada LSP devel-17.06.01"
+	depends on SYNO_LSP_ARMADA && SYNO_LSP_ARMADA_16_12 && SYNO_LSP_ARMADA_17_02_02 && SYNO_LSP_ARMADA_17_04_02
+	default y
+
+config SYNO_LSP_RTD129X
+	bool "Apply Realtek rtd129x LSP"
+	depends on ARM64 && ARCH_RTD129X
+
+config SYNO_DUAL_HEAD
+	bool "Synology Dual Head Host"
+	default n
+	depends on SYNO_BROMOLOW || SYNO_BROADWELL
+
+config SYNO_SAS
+	bool "Synology SAS Support"
+	default y
+	depends on SYNO_BROMOLOW || SYNO_BROADWELL || SYNO_GRANTLEY || SYNO_PURLEY || SYNO_COFFEELAKE
+
+endmenu #Platform Selection

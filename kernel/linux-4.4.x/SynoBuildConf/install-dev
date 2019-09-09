@@ -1,0 +1,796 @@
+#!/bin/bash
+# Copyright (c) 2000-2016 Synology Inc. All rights reserved.
+
+skip=0
+
+case "$BUILD_TARGET" in
+	APOLLOLAKE|DENVERTON|KVMX64|BROADWELLNK|PURLEY|COFFEELAKE)
+		KERNEL_STRIP=${STRIP64}
+		;;
+	*)
+		KERNEL_STRIP=${STRIP}
+		;;
+esac
+
+########## Basic Module List ##########
+
+ModCrypto=" \
+	${KernelDir}/crypto/ansi_cprng.ko \
+	${KernelDir}/crypto/cbc.ko \
+	${KernelDir}/crypto/des_generic.ko \
+	${KernelDir}/crypto/ecb.ko \
+	${KernelDir}/crypto/hmac.ko \
+	${KernelDir}/crypto/md4.ko \
+	${KernelDir}/crypto/md5.ko \
+	${KernelDir}/crypto/sha256_generic.ko \
+	${KernelDir}/crypto/cts.ko \
+	${KernelDir}/crypto/seqiv.ko \
+	${KernelDir}/crypto/gcm.ko \
+	${KernelDir}/crypto/ccm.ko \
+	${KernelDir}/crypto/ghash-generic.ko \
+	${KernelDir}/crypto/ctr.ko \
+	${KernelDir}/crypto/arc4.ko \
+	${KernelDir}/crypto/cryptd.ko \
+	${KernelDir}/crypto/ablk_helper.ko \
+	${KernelDir}/crypto/gf128mul.ko \
+	${KernelDir}/crypto/lrw.ko \
+	${KernelDir}/crypto/echainiv.ko \
+	"
+ModFS=" \
+	${KernelDir}/fs/fat/fat.ko \
+	${KernelDir}/fs/fat/vfat.ko \
+	${KernelDir}/fs/hfsplus/hfsplus.ko \
+	${KernelDir}/drivers/md/dm-flakey.ko \
+	"
+ModEncFS=" \
+	${KernelDir}/fs/ecryptfs/ecryptfs.ko \
+	"
+ModFUSE=" \
+	${KernelDir}/fs/fuse/fuse.ko \
+	"
+ModISOFS=" \
+	${KernelDir}/drivers/block/loop.ko \
+	${KernelDir}/fs/isofs/isofs.ko \
+	${KernelDir}/fs/udf/udf.ko \
+	${KernelDir}/lib/crc-itu-t.ko \
+	"
+Mod2Lan=" \
+	${KernelDir}/drivers/net/bonding/bonding.ko \
+	"
+ModAppleTalk=" \
+	${KernelDir}/net/802/psnap.ko \
+	${KernelDir}/net/802/p8022.ko \
+	${KernelDir}/net/appletalk/appletalk.ko \
+	${KernelDir}/net/llc/llc.ko \
+	"
+ModFirewall=" \
+	${KernelDir}/net/ipv4/netfilter/ip_tables.ko \
+	${KernelDir}/net/netfilter/xt_REDIRECT.ko \
+	${KernelDir}/net/ipv4/netfilter/iptable_filter.ko \
+	${KernelDir}/net/ipv4/netfilter/iptable_nat.ko \
+	${KernelDir}/net/ipv4/netfilter/nf_conntrack_ipv4.ko \
+	${KernelDir}/net/ipv4/netfilter/nf_defrag_ipv4.ko \
+	${KernelDir}/net/netfilter/nf_nat.ko \
+	${KernelDir}/net/ipv4/netfilter/nf_nat_ipv4.ko \
+	${KernelDir}/net/netfilter/nf_conntrack.ko \
+	${KernelDir}/net/netfilter/x_tables.ko \
+	${KernelDir}/net/netfilter/xt_multiport.ko \
+	${KernelDir}/net/netfilter/xt_state.ko \
+	${KernelDir}/net/netfilter/xt_tcpudp.ko \
+	${KernelDir}/net/netfilter/xt_LOG.ko \
+	${KernelDir}/net/netfilter/xt_limit.ko \
+	${KernelDir}/net/netfilter/xt_iprange.ko \
+	${KernelDir}/net/netfilter/xt_recent.ko \
+	${KernelDir}/net/netfilter/nfnetlink.ko \
+	${KernelDir}/net/netfilter/nfnetlink_queue.ko \
+	${KernelDir}/net/netfilter/ipset/ip_set.ko \
+	${KernelDir}/net/netfilter/ipset/ip_set_hash_ip.ko \
+	${KernelDir}/net/netfilter/xt_set.ko \
+	${KernelDir}/net/netfilter/xt_nat.ko \
+	${KernelDir}/net/netfilter/xt_TCPMSS.ko \
+	${KernelDir}/net/ipv4/netfilter/nf_nat_masquerade_ipv4.ko \
+	${KernelDir}/net/netfilter/nf_nat_redirect.ko \
+	${KernelDir}/net/ipv4/netfilter/ipt_MASQUERADE.ko \
+	${KernelDir}/net/netfilter/xt_mac.ko \
+	"
+ModIPv6FW=" \
+	${KernelDir}/net/ipv6/netfilter/ip6_tables.ko \
+	${KernelDir}/net/ipv6/netfilter/ip6table_filter.ko \
+	${KernelDir}/net/ipv6/netfilter/nf_defrag_ipv6.ko \
+	${KernelDir}/net/ipv6/netfilter/nf_conntrack_ipv6.ko \
+	${KernelDir}/net/netfilter/xt_LOG.ko \
+	"
+ModIPv6=" \
+	${KernelDir}/net/ipv6/ipv6.ko \
+	"
+ModPPP=" \
+	${KernelDir}/drivers/net/ppp/ppp_async.ko \
+	${KernelDir}/drivers/net/ppp/ppp_generic.ko \
+	${KernelDir}/drivers/net/ppp/ppp_synctty.ko \
+	${KernelDir}/drivers/net/ppp/pppox.ko \
+	${KernelDir}/drivers/net/ppp/pppoe.ko \
+	${KernelDir}/drivers/net/ppp/bsd_comp.ko \
+	${KernelDir}/drivers/net/ppp/ppp_deflate.ko \
+	${KernelDir}/drivers/net/ppp/ppp_mppe.ko \
+	${KernelDir}/drivers/net/ppp/pptp.ko \
+	${KernelDir}/net/l2tp/l2tp_core.ko \
+	${KernelDir}/net/l2tp/l2tp_ppp.ko \
+	${KernelDir}/net/ipv4/gre.ko \
+	${KernelDir}/drivers/net/slip/slhc.ko \
+	${KernelDir}/drivers/tty/n_hdlc.ko \
+	${KernelDir}/lib/crc-ccitt.ko \
+	"
+ModTunnel=" \
+	${KernelDir}/drivers/net/tun.ko \
+	"
+ModISCSI=" \
+	${KernelDir}/drivers/scsi/libiscsi.ko \
+	${KernelDir}/drivers/scsi/libiscsi_tcp.ko \
+	${KernelDir}/drivers/scsi/iscsi_tcp.ko \
+	"
+ModNFSD=" \
+	${KernelDir}/fs/exportfs/exportfs.ko \
+	${KernelDir}/fs/nfsd/nfsd.ko \
+	${KernelDir}/net/sunrpc/auth_gss/rpcsec_gss_krb5.ko \
+	"
+ModCIFS=" \
+	${KernelDir}/fs/cifs/cifs.ko \
+	"
+ModQuota=" \
+	${KernelDir}/fs/quota/quota_tree.ko \
+	${KernelDir}/fs/quota/quota_v2.ko \
+	"
+ModSCSI=" \
+	${KernelDir}/drivers/scsi/sg.ko \
+	"
+ModSnapshot=" \
+	${KernelDir}/drivers/md/dm-bufio.ko \
+	${KernelDir}/drivers/md/dm-snapshot.ko \
+	"
+ModSound=" \
+	${KernelDir}/sound/soundcore.ko \
+	"
+ModUSBLP=" \
+	${KernelDir}/drivers/usb/class/usblp.ko \
+	"
+ModUSB=" \
+	${KernelDir}/drivers/hid/hid.ko \
+	${KernelDir}/drivers/hid/hid-generic.ko \
+	${KernelDir}/drivers/hid/usbhid/usbhid.ko \
+	${KernelDir}/drivers/usb/host/uhci-hcd.ko \
+	${KernelDir}/drivers/usb/host/xhci-hcd.ko \
+	${KernelDir}/drivers/usb/host/xhci-pci.ko \
+	${KernelDir}/drivers/usb/common/usb-common.ko \
+	${KernelDir}/drivers/usb/core/usbcore.ko \
+	${KernelDir}/drivers/usb/host/ehci-hcd.ko \
+	${KernelDir}/drivers/usb/host/ehci-pci.ko \
+	${KernelDir}/drivers/usb/storage/usb-storage.ko \
+	${KernelDir}/drivers/usb/class/cdc-acm.ko \
+	${ModUSBLP} \
+	"
+ModUSBIP=" \
+	${KernelDir}/drivers/usb/usbip_inf/usbip-host.ko \
+	${KernelDir}/drivers/usb/usbip_inf/usbip-core.ko
+	"
+ModUSBWimax=" \
+	${KernelDir}/drivers/net/usb/usbnet.ko \
+	${KernelDir}/drivers/net/usb/cdc_ether.ko \
+	"
+ModAlsa=" \
+	${KernelDir}/sound/core/snd-pcm.ko \
+	${KernelDir}/sound/usb/snd-usbmidi-lib.ko \
+	${KernelDir}/sound/usb/snd-usb-audio.ko \
+	${KernelDir}/sound/core/seq/snd-seq-device.ko \
+	${KernelDir}/sound/core/snd.ko \
+	${KernelDir}/sound/core/snd-hwdep.ko \
+	${KernelDir}/sound/core/snd-rawmidi.ko \
+	${KernelDir}/sound/core/oss/snd-pcm-oss.ko \
+	${KernelDir}/sound/core/oss/snd-mixer-oss.ko \
+	${KernelDir}/sound/core/snd-timer.ko \
+	${KernelDir}/sound/usb/hiface/snd-usb-hiface.ko \
+	"
+ModDocker=" \
+	${KernelDir}/drivers/net/macvlan.ko \
+	${KernelDir}/drivers/net/veth.ko \
+	${KernelDir}/drivers/net/vxlan.ko \
+	${KernelDir}/net/bridge/br_netfilter.ko \
+	${KernelDir}/net/ipv4/udp_tunnel.ko \
+	${KernelDir}/net/ipv6/ip6_udp_tunnel.ko \
+	${KernelDir}/net/netfilter/xt_addrtype.ko \
+	${KernelDir}/net/netfilter/xt_conntrack.ko \
+	${KernelDir}/fs/aufs/aufs.ko \
+	"
+
+BasicModuleList=" \
+	${ModCrypto} \
+	${ModFS} \
+	${ModEncFS} \
+	${ModFUSE} \
+	${ModISOFS} \
+	${Mod2Lan} \
+	${ModAppleTalk} \
+	${ModFirewall} \
+	${ModIPv6FW} \
+	${ModIPv6} \
+	${ModPPP} \
+	${ModTunnel} \
+	${ModISCSI} \
+	${ModNFSD} \
+	${ModCIFS} \
+	${ModQuota} \
+	${ModSCSI} \
+	${ModSnapshot} \
+	${ModSound} \
+	${ModUSB} \
+	${ModUSBIP} \
+	${ModUSBWimax} \
+	${ModAlsa} \
+	${ModDocker} \
+	"
+########## Advanced Module List ##########
+
+ModIPv6Tun=" \
+	${KernelDir}/net/ipv4/ip_tunnel.ko \
+	${KernelDir}/net/ipv4/tunnel4.ko \
+	${KernelDir}/net/ipv6/sit.ko \
+	"
+ModNFQ=" \
+	${KernelDir}/net/netfilter/nfnetlink.ko \
+	${KernelDir}/net/netfilter/nfnetlink_queue.ko \
+	${KernelDir}/net/netfilter/xt_NFQUEUE.ko \
+	"
+ModCPUFreq=" \
+	${KernelDir}/drivers/cpufreq/cpufreq_stats.ko \
+	${KernelDir}/drivers/acpi/processor.ko \
+	${KernelDir}/drivers/cpufreq/acpi-cpufreq.ko \
+	${KernelDir}/drivers/cpufreq/cpufreq_performance.ko \
+	${KernelDir}/drivers/cpufreq/cpufreq_powersave.ko \
+	"
+ModBridge=" \
+	${KernelDir}/net/bridge/bridge.ko \
+	${KernelDir}/net/802/stp.ko	\
+	"
+ModTC=" \
+	${KernelDir}/net/sched/sch_htb.ko \
+	${KernelDir}/net/sched/sch_sfq.ko \
+	${KernelDir}/net/sched/cls_fw.ko \
+	${KernelDir}/net/sched/sch_netem.ko \
+	${KernelDir}/net/netfilter/xt_mark.ko \
+	${KernelDir}/net/ipv4/netfilter/iptable_mangle.ko \
+	${KernelDir}/net/ipv6/netfilter/ip6table_mangle.ko \
+	${KernelDir}/net/sched/cls_u32.ko
+	"
+ModFwSecurity=" \
+	${KernelDir}/net/netfilter/nf_conntrack_proto_gre.ko \
+	${KernelDir}/net/netfilter/nf_conntrack_pptp.ko \
+	${KernelDir}/net/ipv4/netfilter/nf_nat_proto_gre.ko \
+	${KernelDir}/net/ipv4/netfilter/nf_nat_pptp.ko \
+	"
+ModVlan=" \
+	${KernelDir}/net/8021q/8021q.ko \
+	"
+ModIPsec=" \
+	${KernelDir}/crypto/deflate.ko \
+	${KernelDir}/crypto/authenc.ko \
+	${KernelDir}/crypto/authencesn.ko \
+	${KernelDir}/net/ipv4/ah4.ko \
+	${KernelDir}/net/ipv4/esp4.ko \
+	${KernelDir}/net/ipv4/ipcomp.ko \
+	${KernelDir}/net/ipv4/xfrm4_tunnel.ko \
+	${KernelDir}/net/ipv4/xfrm4_mode_beet.ko \
+	${KernelDir}/net/ipv4/tunnel4.ko \
+	${KernelDir}/net/ipv4/udp_tunnel.ko \
+	${KernelDir}/net/ipv4/xfrm4_mode_transport.ko \
+	${KernelDir}/net/ipv4/xfrm4_mode_tunnel.ko \
+	${KernelDir}/net/xfrm/xfrm_algo.ko \
+	${KernelDir}/net/xfrm/xfrm_user.ko \
+	${KernelDir}/net/xfrm/xfrm_ipcomp.ko \
+	${KernelDir}/net/ipv6/ah6.ko \
+	${KernelDir}/net/ipv6/esp6.ko \
+	${KernelDir}/net/ipv6/ipcomp6.ko \
+	${KernelDir}/net/ipv6/xfrm6_tunnel.ko \
+	${KernelDir}/net/ipv6/tunnel6.ko \
+	${KernelDir}/net/ipv6/ip6_udp_tunnel.ko \
+	${KernelDir}/net/ipv6/xfrm6_mode_transport.ko \
+	${KernelDir}/net/ipv6/xfrm6_mode_tunnel.ko \
+	${KernelDir}/net/ipv6/xfrm6_mode_beet.ko \
+	${KernelDir}/net/key/af_key.ko \
+	"
+ModZram=" \
+	${KernelDir}/drivers/block/zram/zram.ko \
+	"
+ModVaapi=" \
+	${KernelDir}/drivers/char/agp/agpgart.ko \
+	${KernelDir}/drivers/char/agp/intel-gtt.ko \
+	${KernelDir}/drivers/char/agp/intel-agp.ko \
+	${KernelDir}/drivers/gpu/drm/drm.ko \
+	${KernelDir}/arch/x86/video/fbdev.ko \
+	${KernelDir}/drivers/video/fbdev/core/fb.ko \
+	${KernelDir}/drivers/video/fbdev/core/fb_sys_fops.ko \
+	${KernelDir}/drivers/video/fbdev/core/sysimgblt.ko \
+	${KernelDir}/drivers/video/fbdev/core/sysfillrect.ko \
+	${KernelDir}/drivers/video/fbdev/core/syscopyarea.ko \
+	${KernelDir}/drivers/gpu/drm/drm_kms_helper.ko \
+	${KernelDir}/drivers/video/fbdev/core/cfbcopyarea.ko \
+	${KernelDir}/drivers/video/fbdev/core/cfbimgblt.ko \
+	${KernelDir}/drivers/video/fbdev/core/cfbfillrect.ko \
+	${KernelDir}/drivers/acpi/button.ko \
+	${KernelDir}/drivers/video/backlight/backlight.ko \
+	${KernelDir}/drivers/acpi/video.ko \
+	${KernelDir}/drivers/gpu/drm/i915/i915.ko \
+	${KernelDir}/drivers/video/backlight/generic_bl.ko \
+	"
+ModVirtualization=" \
+	${KernelDir}/virt/lib/irqbypass.ko \
+	${KernelDir}/arch/x86/kvm/kvm.ko \
+	${KernelDir}/arch/x86/kvm/kvm-intel.ko \
+	${KernelDir}/drivers/pci/pci-stub.ko \
+	"
+ModOpenvswitch=" \
+	${KernelDir}/net/openvswitch/openvswitch.ko \
+	${KernelDir}/net/mpls/mpls_gso.ko \
+"
+ModUSBModem=" \
+	${KernelDir}/drivers/usb/serial/usb_wwan.ko \
+	${KernelDir}/drivers/usb/serial/option.ko \
+	${KernelDir}/drivers/usb/class/cdc-acm.ko \
+	${KernelDir}/drivers/usb/serial/sierra.ko \
+	"
+ModUSBserial=" \
+	${KernelDir}/drivers/usb/serial/usbserial.ko \
+	${KernelDir}/drivers/usb/serial/ftdi_sio.ko \
+	"
+ModIPMI=" \
+	${KernelDir}/drivers/char/ipmi/ipmi_devintf.ko \
+	${KernelDir}/drivers/char/ipmi/ipmi_msghandler.ko \
+	${KernelDir}/drivers/char/ipmi/ipmi_si.ko \
+	"
+ModLP3943=" \
+	${KernelDir}/drivers/leds/leds-lp3943.ko \
+	"
+ModWirless=" \
+	${KernelDir}/net/wireless/cfg80211.ko \
+	${KernelDir}/net/mac80211/mac80211.ko \
+	${KernelDir}/drivers/misc/eeprom/eeprom_93cx6.ko \
+	${KernelDir}/drivers/staging/rtl8712/r8712u.ko \
+	${KernelDir}/drivers/net/wireless/ath/ath.ko \
+	${KernelDir}/drivers/net/wireless/ath/ath9k/ath9k.ko \
+	${KernelDir}/drivers/net/wireless/ath/ath9k/ath9k_common.ko \
+	${KernelDir}/drivers/net/wireless/ath/ath9k/ath9k_htc.ko \
+	${KernelDir}/drivers/net/wireless/ath/ath9k/ath9k_hw.ko \
+	${KernelDir}/drivers/net/wireless/ath/carl9170/carl9170.ko \
+	${KernelDir}/drivers/net/wireless/rt2x00/rt2800lib.ko \
+	${KernelDir}/drivers/net/wireless/rt2x00/rt2800usb.ko \
+	${KernelDir}/drivers/net/wireless/rt2x00/rt2x00lib.ko \
+	${KernelDir}/drivers/net/wireless/rt2x00/rt2x00usb.ko \
+	${KernelDir}/drivers/net/wireless/mediatek/mt7601u/mt7601u.ko \
+	${KernelDir}/drivers/net/wireless/realtek/rtlwifi/rtlwifi.ko \
+	${KernelDir}/drivers/net/wireless/realtek/rtlwifi/rtl_usb.ko \
+	${KernelDir}/drivers/net/wireless/realtek/rtl818x/rtl8187/rtl8187.ko \
+	${KernelDir}/drivers/net/wireless/realtek/rtlwifi/rtl8192c/rtl8192c-common.ko \
+	${KernelDir}/drivers/net/wireless/realtek/rtlwifi/rtl8192cu/rtl8192cu.ko \
+	${KernelDir}/drivers/net/wireless/zd1211rw/zd1211rw.ko \
+	"
+ModBluetooth=" \
+	${KernelDir}/net/bluetooth/bluetooth.ko \
+	${KernelDir}/net/bluetooth/hidp/hidp.ko \
+	${KernelDir}/net/bluetooth/rfcomm/rfcomm.ko \
+	${KernelDir}/drivers/bluetooth/ath3k.ko \
+	${KernelDir}/drivers/bluetooth/bcm203x.ko \
+	${KernelDir}/drivers/bluetooth/btbcm.ko \
+	${KernelDir}/drivers/bluetooth/btintel.ko \
+	${KernelDir}/drivers/bluetooth/btrtl.ko \
+	${KernelDir}/drivers/bluetooth/bfusb.ko \
+	${KernelDir}/drivers/bluetooth/btusb.ko \
+	${KernelDir}/drivers/bluetooth/hci_uart.ko \
+	"
+ModDVB=" \
+	${KernelDir}/scripts/DVB/4.4.x/*.ko \
+	"
+ModI2C=" \
+	${KernelDir}/drivers/i2c/algos/i2c-algo-bit.ko \
+	"
+ModXFS=" \
+	${KernelDir}/fs/xfs/xfs.ko \
+	"
+ModBTRFS=" \
+	${KernelDir}/fs/btrfs/btrfs.ko \
+	"
+ModCryptoIntel=" \
+	${KernelDir}/arch/x86/crypto/crc32c-intel.ko \
+	${KernelDir}/arch/x86/crypto/aes-x86_64.ko \
+	${KernelDir}/arch/x86/crypto/glue_helper.ko \
+	${KernelDir}/arch/x86/crypto/aesni-intel.ko \
+	"
+ModDiskPwCtl=" \
+	${ModuleList} ${KernelDir}/drivers/hwmon/syno_hddmon.ko \
+	"
+ModEtronUSB=" \
+	${KernelDir}/drivers/usb/host/etxhci-hcd.ko \
+	"
+ModVirtio=" \
+	${KernelDir}/drivers/block/virtio_blk.ko \
+	${KernelDir}/drivers/char/virtio_console.ko \
+	${KernelDir}/drivers/net/virtio_net.ko \
+	${KernelDir}/drivers/scsi/virtio_scsi.ko \
+	${KernelDir}/drivers/virtio/virtio.ko \
+	${KernelDir}/drivers/virtio/virtio_balloon.ko \
+	${KernelDir}/drivers/virtio/virtio_mmio.ko \
+	${KernelDir}/drivers/virtio/virtio_pci.ko \
+	${KernelDir}/drivers/virtio/virtio_ring.ko \
+	${KernelDir}/net/9p/9pnet_virtio.ko \
+	"
+ModDCA=" \
+	${KernelDir}/drivers/dca/dca.ko \
+	"
+ModADT=" \
+	${KernelDir}/drivers/hwmon/adt7475.ko \
+	"
+########## Deprecated Module List ##########
+
+ModTalitos=" \
+	${KernelDir}/crypto/authenc.ko \
+	${KernelDir}/drivers/char/hw_random/rng-core.ko \
+	${KernelDir}/drivers/crypto/talitos.ko \
+	"
+ModOCF=" \
+	${KernelDir}/crypto/ocf/cryptodev.ko \
+	${KernelDir}/crypto/ocf/cryptosoft.ko \
+	${KernelDir}/crypto/ocf/ocf.ko \
+	"
+ModRaid=" \
+	${KernelDir}/drivers/md/dm-mod.ko \
+	${KernelDir}/drivers/md/linear.ko \
+	${KernelDir}/drivers/md/md-mod.ko \
+	${KernelDir}/drivers/md/raid0.ko \
+	${KernelDir}/drivers/md/raid1.ko \
+	${KernelDir}/drivers/md/raid10.ko \
+	${KernelDir}/drivers/md/raid456.ko \
+	${KernelDir}/lib/raid6/raid6_pq.ko \
+	${KernelDir}/crypto/async_tx/async_tx.ko \
+	${KernelDir}/crypto/async_tx/async_memcpy.ko \
+	${KernelDir}/crypto/async_tx/async_xor.ko \
+	${KernelDir}/crypto/async_tx/async_pq.ko \
+	${KernelDir}/crypto/async_tx/async_raid6_recov.ko \
+	${KernelDir}/crypto/xor.ko \
+	"
+ModRfkill=" \
+	${KernelDir}/net/rfkill/rfkill.ko \
+	"
+
+##################################################
+
+ModuleList="${ModuleList} ${BasicModuleList}"
+
+case "$BUILD_TARGET" in
+	DENVERTON)
+		ModuleList="${ModuleList} ${ModBTRFS}"
+		ModuleList="${ModuleList} ${ModCryptoIntel}"
+		ModuleList="${ModuleList} ${ModI2C}"
+		ModuleList="${ModuleList} ${ModLP3943}"
+		ModuleList="${ModuleList} ${ModCPUFreq}"
+		ModuleList="${ModuleList} ${ModBridge} ${ModTC} ${ModFwSecurity}"
+		ModuleList="${ModuleList} ${ModVlan}"
+		ModuleList="${ModuleList} ${ModUSBserial}"
+		ModuleList="${ModuleList} ${ModIPsec}"
+		ModuleList="${ModuleList} ${ModUSBModem}"
+		ModuleList="${ModuleList} ${ModEtronUSB}"
+		ModuleList="${ModuleList} ${ModWirless}"
+		ModuleList="${ModuleList} ${ModBluetooth}"
+		ModuleList="${ModuleList} ${ModZram}"
+		ModuleList="${ModuleList} ${ModIPv6Tun}"
+		ModuleList="${ModuleList} ${ModVirtualization}"
+		ModuleList="${ModuleList} ${ModOpenvswitch}"
+		ModuleList="${ModuleList} ${ModNFQ}"
+		ModuleList="${ModuleList} ${ModDVB}"
+		ModuleList="${ModuleList} ${ModDiskPwCtl}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/net/mdio.ko"
+
+		;;
+	APOLLOLAKE)
+		ModuleList="${ModuleList} ${ModBTRFS}"
+		ModuleList="${ModuleList} ${ModCryptoIntel}"
+		ModuleList="${ModuleList} ${ModI2C}"
+		ModuleList="${ModuleList} ${ModLP3943}"
+		ModuleList="${ModuleList} ${ModCPUFreq}"
+		ModuleList="${ModuleList} ${ModBridge} ${ModTC} ${ModFwSecurity}"
+		ModuleList="${ModuleList} ${ModVlan}"
+		ModuleList="${ModuleList} ${ModUSBserial}"
+		ModuleList="${ModuleList} ${ModIPsec}"
+		ModuleList="${ModuleList} ${ModUSBModem}"
+		ModuleList="${ModuleList} ${ModEtronUSB}"
+		ModuleList="${ModuleList} ${ModWirless}"
+		ModuleList="${ModuleList} ${ModBluetooth}"
+		ModuleList="${ModuleList} ${ModZram}"
+		ModuleList="${ModuleList} ${ModIPv6Tun}"
+		ModuleList="${ModuleList} ${ModVaapi}"
+		ModuleList="${ModuleList} ${ModNFQ}"
+		ModuleList="${ModuleList} ${ModVirtualization}"
+		ModuleList="${ModuleList} ${ModOpenvswitch}"
+		ModuleList="${ModuleList} ${ModDVB}"
+		ModuleList="${ModuleList} ${ModDiskPwCtl}"
+		ModuleList="${ModuleList} ${KernelDir}/lib/zlib_deflate/zlib_deflate.ko"
+
+		;;
+	KVMX64)
+		ModuleList="${ModuleList} ${ModBTRFS}"
+		ModuleList="${ModuleList} ${ModCryptoIntel}"
+		ModuleList="${ModuleList} ${ModI2C}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/i2c/busses/i2c-i801.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/dma/ioat/ioatdma.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/hwmon/adt7475.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/dca/dca.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/net/mdio.ko"
+		ModuleList="${ModuleList} ${ModCPUFreq}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/cpufreq/cpufreq_conservative.ko"
+		ModuleList="${ModuleList} ${ModBridge} ${ModTC} ${ModFwSecurity}"
+		ModuleList="${ModuleList} ${ModVlan}"
+		ModuleList="${ModuleList} ${ModUSBserial}"
+		ModuleList="${ModuleList} ${ModIPsec}"
+		ModuleList="${ModuleList} ${ModUSBModem}"
+		ModuleList="${ModuleList} ${ModEtronUSB}"
+		ModuleList="${ModuleList} ${ModWirless}"
+		ModuleList="${ModuleList} ${ModBluetooth}"
+		ModuleList="${ModuleList} ${ModZram}"
+		ModuleList="${ModuleList} ${ModIPv6Tun}"
+		ModuleList="${ModuleList} ${ModOpenvswitch}"
+		ModuleList="${ModuleList} ${ModNFQ}"
+		ModuleList="${ModuleList} ${ModDVB}"
+		ModuleList="${ModuleList} ${ModVirtio}"
+		ModuleList="${ModuleList} ${KernelDir}/lib/zlib_deflate/zlib_deflate.ko"
+
+		;;
+	REALTEK_RTD1296)
+		ModuleList="${ModuleList} ${KernelDir}/net/ipv4/netfilter/ipt_MASQUERADE.ko"
+		ModuleList="${ModuleList} ${KernelDir}/lib/zlib_deflate/zlib_deflate.ko"
+		ModuleList="${ModuleList} ${ModBTRFS}"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/arc4.ko"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/cryptd.ko"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/ocf/cryptodev.ko"
+		ModuleList="${ModuleList} ${KernelDir}/arch/arm64/crypto/aes-neon-blk.ko"
+		ModuleList="${ModuleList} ${KernelDir}/arch/arm64/crypto/aes-ce-blk.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/i2c/algos/i2c-algo-bit.ko"
+		ModuleList="${ModuleList} ${ModLP3943}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/uhci-hcd.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/xhci-hcd.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/xhci-pci.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/xhci-plat-hcd.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/common/usb-common.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/core/usbcore.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/ehci-hcd.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/ehci-pci.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/ehci-rtk.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/storage/usb-storage.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/class/cdc-acm.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/dwc3/dwc3.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/dwc3/dwc3-rtk.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/phy/phy-rtk-rle0599.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/phy/phy-rtk-usb2.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/phy/phy-rtk-usb3.ko"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/ablk_helper.ko"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/gf128mul.ko"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/lrw.ko"
+		ModuleList="${ModuleList} ${ModBridge} ${ModTC} ${ModFwSecurity}"
+		ModuleList="${ModuleList} ${ModVlan}"
+		ModuleList="${ModuleList} ${ModUSBserial}"
+		ModuleList="${ModuleList} ${ModIPsec}"
+		ModuleList="${ModuleList} ${ModUSBModem}"
+		ModuleList="${ModuleList} ${ModWirless}"
+		ModuleList="${ModuleList} ${ModBluetooth}"
+		ModuleList="${ModuleList} ${KernelDir}/net/netfilter/xt_mac.ko"
+		ModuleList="${ModuleList} ${ModZram}"
+		ModuleList="${ModuleList} ${ModIPv6Tun}"
+		ModuleList="${ModuleList} ${ModNFQ}"
+		ModuleList="${ModuleList} ${ModOpenvswitch}"
+		ModuleList="${ModuleList} ${ModDVB}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/net/ethernet/realtek/r8168/r8168.ko"
+		ModuleList="${ModuleList} ${ModDiskPwCtl}"
+
+		;;
+	BROADWELLNK)
+		ModuleList="${ModuleList} ${ModBTRFS}"
+		ModuleList="${ModuleList} ${ModCryptoIntel}"
+		ModuleList="${ModuleList} ${ModI2C}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/i2c/busses/i2c-i801.ko"
+		ModuleList="${ModuleList} ${ModLP3943}"
+		ModuleList="${ModuleList} ${ModCPUFreq}"
+		ModuleList="${ModuleList} ${ModBridge} ${ModTC} ${ModFwSecurity}"
+		ModuleList="${ModuleList} ${ModVlan}"
+		ModuleList="${ModuleList} ${ModUSBserial}"
+		ModuleList="${ModuleList} ${ModIPsec}"
+		ModuleList="${ModuleList} ${ModUSBModem}"
+		ModuleList="${ModuleList} ${ModEtronUSB}"
+		ModuleList="${ModuleList} ${ModWirless}"
+		ModuleList="${ModuleList} ${ModBluetooth}"
+		ModuleList="${ModuleList} ${ModZram}"
+		ModuleList="${ModuleList} ${ModIPv6Tun}"
+		ModuleList="${ModuleList} ${ModVirtualization}"
+		ModuleList="${ModuleList} ${ModOpenvswitch}"
+		ModuleList="${ModuleList} ${ModNFQ}"
+		ModuleList="${ModuleList} ${ModDVB}"
+		ModuleList="${ModuleList} ${ModDiskPwCtl}"
+		ModuleList="${ModuleList} ${ModDCA}"
+		ModuleList="${ModuleList} ${ModADT}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/net/mdio.ko"
+
+		;;
+	PURLEY)
+		ModuleList="${ModuleList} ${ModBTRFS}"
+		ModuleList="${ModuleList} ${ModCryptoIntel}"
+		ModuleList="${ModuleList} ${ModI2C}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/i2c/busses/i2c-i801.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/dma/ioat/ioatdma.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/hwmon/adt7475.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/dca/dca.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/net/mdio.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/scsi/mpt3sas/mpt3sas.ko"
+		ModuleList="${ModuleList} ${ModCPUFreq}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/cpufreq/cpufreq_conservative.ko"
+		ModuleList="${ModuleList} ${ModBridge} ${ModTC} ${ModFwSecurity}"
+		ModuleList="${ModuleList} ${ModVlan}"
+		ModuleList="${ModuleList} ${ModUSBserial}"
+		ModuleList="${ModuleList} ${ModIPsec}"
+		ModuleList="${ModuleList} ${ModUSBModem}"
+		ModuleList="${ModuleList} ${ModWirless}"
+		ModuleList="${ModuleList} ${ModBluetooth}"
+		ModuleList="${ModuleList} ${ModZram}"
+		ModuleList="${ModuleList} ${ModIPv6Tun}"
+		ModuleList="${ModuleList} ${ModIPMI}"
+		ModuleList="${ModuleList} ${ModVirtualization}"
+		ModuleList="${ModuleList} ${ModOpenvswitch}"
+		ModuleList="${ModuleList} ${ModNFQ}"
+		ModuleList="${ModuleList} ${ModDVB}"
+		ModuleList="${ModuleList} ${KernelDir}/lib/zlib_deflate/zlib_deflate.ko"
+
+		;;
+	MARVELL_ARMADA37XX)
+		ModuleList="${ModuleList} ${KernelDir}/net/ipv4/netfilter/ipt_MASQUERADE.ko"
+		ModuleList="${ModuleList} ${KernelDir}/lib/zlib_deflate/zlib_deflate.ko"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/arc4.ko"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/cryptd.ko"
+		ModuleList="${ModuleList} ${KernelDir}/arch/arm64/crypto/aes-neon-blk.ko"
+		ModuleList="${ModuleList} ${KernelDir}/arch/arm64/crypto/aes-ce-blk.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/i2c/algos/i2c-algo-bit.ko"
+		ModuleList="${ModuleList} ${ModLP3943}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/xhci-hcd.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/xhci-pci.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/xhci-plat-hcd.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/common/usb-common.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/core/usbcore.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/ehci-hcd.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/host/ehci-pci.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/storage/usb-storage.ko"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/usb/class/cdc-acm.ko"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/ablk_helper.ko"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/gf128mul.ko"
+		ModuleList="${ModuleList} ${KernelDir}/crypto/lrw.ko"
+		ModuleList="${ModuleList} ${ModBridge} ${ModTC} ${ModFwSecurity}"
+		ModuleList="${ModuleList} ${ModVlan}"
+		ModuleList="${ModuleList} ${ModUSBserial}"
+		ModuleList="${ModuleList} ${ModIPsec}"
+		ModuleList="${ModuleList} ${ModUSBModem}"
+		ModuleList="${ModuleList} ${ModWirless}"
+		ModuleList="${ModuleList} ${ModBluetooth}"
+		ModuleList="${ModuleList} ${KernelDir}/net/netfilter/xt_mac.ko"
+		ModuleList="${ModuleList} ${ModZram}"
+		ModuleList="${ModuleList} ${ModIPv6Tun}"
+		ModuleList="${ModuleList} ${ModNFQ}"
+		ModuleList="${ModuleList} ${ModOpenvswitch}"
+		ModuleList="${ModuleList} ${ModDVB}"
+		ModuleList="${ModuleList} ${ModDiskPwCtl}"
+
+		;;
+	COFFEELAKE)
+		ModuleList="${ModuleList} ${ModBTRFS}"
+		ModuleList="${ModuleList} ${ModCryptoIntel}"
+		ModuleList="${ModuleList} ${ModI2C}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/i2c/busses/i2c-i801.ko"
+		ModuleList="${ModuleList} ${ModLP3943}"
+		ModuleList="${ModuleList} ${ModCPUFreq}"
+		ModuleList="${ModuleList} ${ModBridge} ${ModTC} ${ModFwSecurity}"
+		ModuleList="${ModuleList} ${ModVlan}"
+		ModuleList="${ModuleList} ${ModUSBserial}"
+		ModuleList="${ModuleList} ${ModIPsec}"
+		ModuleList="${ModuleList} ${ModUSBModem}"
+		ModuleList="${ModuleList} ${ModEtronUSB}"
+		ModuleList="${ModuleList} ${ModWirless}"
+		ModuleList="${ModuleList} ${ModBluetooth}"
+		ModuleList="${ModuleList} ${ModZram}"
+		ModuleList="${ModuleList} ${ModIPv6Tun}"
+		ModuleList="${ModuleList} ${ModVirtualization}"
+		ModuleList="${ModuleList} ${ModOpenvswitch}"
+		ModuleList="${ModuleList} ${ModNFQ}"
+		ModuleList="${ModuleList} ${ModDVB}"
+		ModuleList="${ModuleList} ${ModDiskPwCtl}"
+		ModuleList="${ModuleList} ${ModDCA}"
+		ModuleList="${ModuleList} ${ModADT}"
+		ModuleList="${ModuleList} ${KernelDir}/drivers/net/mdio.ko"
+
+		;;
+	*)
+		SkipThisProject
+		return
+		;;
+esac
+
+rm -f ${ImageDir}/modules/*
+mkdir -p ${DebDevBuild}/image/modules;
+# Check if modules are built correctly
+for EACHFILE in $ModuleList;
+do
+	if [ -f "$EACHFILE" ]; then
+		cp -f ${EACHFILE} ${DebDevBuild}/image/modules
+		FN=`basename ${EACHFILE}`
+		echo "${KERNEL_STRIP} -d ${DebDevBuild}/image/modules/$FN"
+		${KERNEL_STRIP} -d ${DebDevBuild}/image/modules/$FN
+		ls -l $EACHFILE
+	else
+		echo "Error! file $EACHFILE does not existed!"
+	fi
+done
+
+case ${BUILD_TARGET} in
+	APOLLOLAKE|DENVERTON|KVMX64|BROADWELLNK|PURLEY|COFFEELAKE)
+		ZIMAGE="${KernelDir}/arch/x86_64/boot/bzImage"
+		;;
+	REALTEK_RTD1296)
+		lzma -z ${KernelDir}/arch/arm64/boot/Image
+		ZIMAGE="${KernelDir}/arch/arm64/boot/Image.lzma"
+		mkdir -p ${SysRootInclude}/crypto
+		cp -vf crypto/ocf/cryptodev.h ${SysRootInclude}/crypto
+		cp -vf ${KernelDir}/arch/arm64/boot/dts/realtek/rtd-1296-synology-DS418.dtb ${DebDevBuild}/image/dtb_ds418.bin
+		cp -vf ${KernelDir}/arch/arm64/boot/dts/realtek/rtd-1293-synology-DS418j.dtb ${DebDevBuild}/image/dtb_ds418j.bin
+		cp -vf ${KernelDir}/arch/arm64/boot/dts/realtek/rtd-1296-synology-DS218play.dtb ${DebDevBuild}/image/dtb_ds218play.bin
+		cp -vf ${KernelDir}/arch/arm64/boot/dts/realtek/rtd-1296-synology-DS118.dtb ${DebDevBuild}/image/dtb_ds118.bin
+		cp -vf ${KernelDir}/arch/arm64/boot/dts/realtek/rtd-1296-synology-DS218.dtb ${DebDevBuild}/image/dtb_ds218.bin
+		;;
+	MARVELL_ARMADA37XX)
+		lzma -z ${KernelDir}/arch/arm64/boot/Image
+		mv ${KernelDir}/arch/arm64/boot/Image.lzma ${KernelDir}/arch/arm64/boot/zImage
+		ZIMAGE="${KernelDir}/arch/arm64/boot/zImage"
+		mkdir -p ${SysRootInclude}/crypto
+		cp -vf crypto/ocf/cryptodev.h ${SysRootInclude}/crypto
+       ;;
+	*)
+		skip=1
+		;;
+esac
+
+KernelDirBase=`basename $KernelDir`
+CurDir=`pwd`
+CurDirBase=`basename $CurDir`
+if [ "$KernelDirBase" != "$CurDirBase" ]; then
+	skip=1
+fi
+
+if [ $skip -eq 1 ]; then
+	SkipThisProject
+	return
+fi
+
+if [ -r "$ZIMAGE" ]; then
+	cp -fv $ZIMAGE ${DebDevBuild}/image/zImage
+else
+	echo "$ZIMAGE does not exist...."
+	exit 1
+fi
+
+SystemMap="${KernelDir}/System.map"
+VmLinux="${KernelDir}/vmlinux"
+
+mkdir -p ${DebDevBuild}/image/synodebug
+
+if [ -r "$SystemMap" ]; then
+	cp -fv $SystemMap ${DebDevBuild}/image/synodebug/
+fi
+if [ -r "$VmLinux" ]; then
+	cp -fv $VmLinux ${DebDevBuild}/image/synodebug/
+	gzip -f9 ${DebDevBuild}/image/synodebug/vmlinux
+fi
+
+install -Dm755 "scripts/sign-file" "${DebDevBuild}/usr/syno/bin/sign-file"
+
+# shellcheck source=/dev/null
+source "$ScriptsDir/include/kernel-devel"
+
+install -Dm644 "include/linux/syno_gpio.h" "$WRKDIR/include/linux/syno_gpio.h"

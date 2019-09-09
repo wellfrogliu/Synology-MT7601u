@@ -1,0 +1,149 @@
+#!/bin/bash
+# Copyright (c) 2000-2016 Synology Inc. All rights reserved.
+# vim:ft=sh
+
+# ========================================================================
+# To specify which platform depends on this kernel,
+# please edit the section [platform kernel] in config/project.depends
+# ========================================================================
+
+# Copy key file
+cp -sv /lnxscripts/config/{signing_key,trusted_certificates,untrusted_certificates} certs/
+
+export ARCH=${ARCH}
+case "$BUILD_TARGET" in
+	APOLLOLAKE|DENVERTON|KVMX64|REALTEK_RTD1296|BROADWELLNK|MARVELL_ARMADA37XX|PURLEY|COFFEELAKE)
+		export CROSS_COMPILE=${ToolChainPrefix64} CC=${CC64}
+		KERNEL_CC=${CC64}
+		;;
+	*)
+		CC=`echo ${CC} | awk -F" " '{print $1}'`
+		export CROSS_COMPILE=${ToolChainPrefix} CC="${CC}"
+		KERNEL_CC="${CC}"
+		;;
+esac
+
+case ${MakeClean} in
+	[Yy][Ee][Ss])
+		[ -f Makefile ] && make distclean
+		;;
+esac
+
+case ${CleanOnly} in
+	[Yy][Ee][Ss])
+		return
+		;;
+esac
+
+# Version Infomation
+LNXVERSION="${KernelDir}/.version"
+if [ -f ${VERSION_FILE} ]; then
+	expr $(GetDSMBuildNumber) - 1 > ${LNXVERSION}
+fi
+
+mkdir -p ${ImageDir}/modules
+
+
+case "$BUILD_TARGET" in
+	APOLLOLAKE)
+		KernelImage=${KernelDir}/arch/x86_64/boot/bzImage
+		KernelConfig=synoconfigs/apollolake
+		KernelTarget=bzImage
+		;;
+	DENVERTON)
+		KernelImage=${KernelDir}/arch/x86_64/boot/bzImage
+		KernelConfig=synoconfigs/denverton
+		KernelTarget=bzImage
+		;;
+	KVMX64)
+		KernelImage=${KernelDir}/arch/x86_64/boot/bzImage
+		KernelConfig=synoconfigs/kvmx64
+		KernelTarget=bzImage
+		;;
+	REALTEK_RTD1296)
+		KernelImage=${KernelDir}/arch/arm64/boot/Image
+		KernelConfig=synoconfigs/rtd1296
+		KernelTarget=Image.gz
+		MAKE_DTBS="yes"
+		MAKE_DTC_FLAGS="-p 8192"
+		;;
+	BROADWELLNK)
+		KernelImage=${KernelDir}/arch/x86_64/boot/bzImage
+		KernelConfig=synoconfigs/broadwellnk
+		KernelTarget=bzImage
+		;;
+	MARVELL_ARMADA37XX)
+		KernelImage=${KernelDir}/arch/arm64/boot/Image
+		KernelConfig=synoconfigs/armada37xx
+		KernelTarget=Image.gz
+		;;
+	PURLEY)
+		KernelImage=${KernelDir}/arch/x86_64/boot/bzImage
+		KernelConfig=synoconfigs/purley
+		KernelTarget=bzImage
+		;;
+	COFFEELAKE)
+		KernelImage=${KernelDir}/arch/x86_64/boot/bzImage
+		KernelConfig=synoconfigs/coffeelake
+		KernelTarget=bzImage
+		;;
+	*)
+		SkipThisProject
+		return
+		;;
+esac
+
+# Build kernel and modules
+rm -f ${KernelImage}
+rm -f ${ImageDir}/modules/*
+
+cp -f ${KernelConfig} .config
+mkdir -p include/linux/modules
+make oldconfig
+
+echo "===== Build Synology Linux kernel 4.4.x ====="
+make ${MAKE_FLAGS} ${KernelTarget} modules CC=${KERNEL_CC}
+
+# Check if kernel is built correctly
+if [ ! -f "${KernelImage}" ]; then
+	echo "Error! ${KernelImage} does not exist!"
+	exit 1;
+fi
+
+if [ ! -z "${MAKE_DTBS}" ]; then
+	echo "===== Build Synology device tree 4.4.x ====="
+	make dtbs DTC_FLAGS="${MAKE_DTC_FLAGS}";
+fi
+
+./scripts/syno_gen_usbmodem_table.sh create-table
+DVB_MODULES_DIR="scripts/DVB/4.4.x"
+if [ -d "$DVB_MODULES_DIR" ]; then
+	rm -rf ${DVB_MODULES_DIR}
+fi
+
+mkdir -p ${DVB_MODULES_DIR}
+find drivers/media -name '*.ko' -exec cp {} ${DVB_MODULES_DIR}/ \;
+cp drivers/base/regmap/regmap-i2c.ko ${DVB_MODULES_DIR};
+cd ./scripts/DVB/
+./generate_dependency_table.py 2>&1
+./generate_VIDPID_table.py 2>&1
+./generate_cleanuped_dependency_table.py 2>&1
+cd -
+
+# Compare kernel config with re-generated one to see
+# if any changes or new options not reapplied to ${KernelConfig}.
+ConfigDiff=`diff -bu ${KernelConfig} .config`
+if [ -z "$ConfigDiff" ]; then
+	echo
+	echo "Kernel config matches generated .config"
+	echo
+else
+	echo ========== diff -bu ${KernelConfig} .config
+	diff -bu ${KernelConfig} .config
+	echo ========== END of diff
+
+	echo
+	echo "!!! Diff EXISTS between ${KernelConfig} & generated .config"
+	echo "!!! Recheck before committing."
+	echo
+fi

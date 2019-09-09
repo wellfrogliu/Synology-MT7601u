@@ -1,0 +1,524 @@
+/*
+ * Device Tree Include file for Marvell Armada 37xx family of SoCs.
+ *
+ * Copyright (C) 2016 Marvell
+ *
+ * Gregory CLEMENT <gregory.clement@free-electrons.com>
+ *
+ * This file is dual-licensed: you can use it either under the terms
+ * of the GPL or the X11 license, at your option. Note that this dual
+ * licensing only applies to this file, and not this project as a
+ * whole.
+ *
+ *  a) This file is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License as
+ *     published by the Free Software Foundation; either version 2 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This file is distributed in the hope that it will be useful
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ * Or, alternatively
+ *
+ *  b) Permission is hereby granted, free of charge, to any person
+ *     obtaining a copy of this software and associated documentation
+ *     files (the "Software"), to deal in the Software without
+ *     restriction, including without limitation the rights to use
+ *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     sell copies of the Software, and to permit persons to whom the
+ *     Software is furnished to do so, subject to the following
+ *     conditions:
+ *
+ *     The above copyright notice and this permission notice shall be
+ *     included in all copies or substantial portions of the Software.
+ *
+ *     THE SOFTWARE IS PROVIDED , WITHOUT WARRANTY OF ANY KIND
+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY
+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *     OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/phy/phy-armada3700-utmi.h>
+#include <dt-bindings/phy/phy-comphy-mvebu.h>
+
+/ {
+	model = "Marvell Armada 37xx SoC";
+	compatible = "marvell,armada3700";
+	interrupt-parent = <&gic>;
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	aliases {
+		ethernet0 = &eth0;
+		ethernet1 = &eth1;
+		serial0 = &uart0;
+		serial1 = &uart1;
+		gpio0 = &gpio_nb;
+		gpio1 = &gpio_sb;
+	};
+
+	cluster0_opp: opp_table0 {
+		compatible = "operating-points-v2";
+		opp-shared;
+		opp@0 {
+			opp-hz = /bits/ 64 <200000000>;
+			clock-latency-ns = <50000>;
+		};
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		psci-area@4000000 {
+			reg = <0 0x4000000 0 0x200000>;
+			no-map;
+		};
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a53", "arm,armv8";
+			reg = <0>;
+			clocks = <&cpu_pm_clk 0>;
+			operating-points-v2 = <&cluster0_opp>;
+			enable-method = "psci";
+		};
+	};
+
+	clocks {
+		osc: osc {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <25000000>;
+		};
+	};
+
+	psci {
+		compatible = "arm,psci-0.2";
+		method = "smc";
+	};
+
+	timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <GIC_PPI 13
+			(GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_HIGH)>,
+			     <GIC_PPI 14
+			(GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_HIGH)>,
+			     <GIC_PPI 11
+			(GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_HIGH)>,
+			     <GIC_PPI 10
+			(GIC_CPU_MASK_SIMPLE(2) | IRQ_TYPE_LEVEL_HIGH)>;
+	};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		internal-regs {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "simple-bus";
+			/* 32M internal register @ 0xd000_0000 */
+			ranges = <0x0 0x0 0xd0000000 0x2000000>;
+			dma-coherent;
+
+			spi0: spi@10600 {
+				compatible = "marvell,armada3700-spi";
+				reg = <0x10600 0xa00>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				cell-index = <0>;
+				clocks = <&ngateclk 12>;
+				fifo-mode;
+				interrupts = <GIC_SPI 0 IRQ_TYPE_LEVEL_HIGH>;
+				status = "disabled";
+			};
+
+			i2c0: i2c@11000 {
+				compatible = "marvell,armada-3700-i2c";
+				reg = <0x11000 0x80>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				interrupts = <GIC_SPI 1 IRQ_TYPE_LEVEL_HIGH>;
+				mrvl,i2c-fast-mode;
+				clocks = <&ngateclk 17>;
+				status = "disabled";
+			};
+
+			i2c1: i2c@11080 {
+				compatible = "marvell,armada-3700-i2c";
+				reg = <0x11080 0x80>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				interrupts = <GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>;
+				mrvl,i2c-fast-mode;
+				clocks = <&ngateclk 16>;
+				status = "disabled";
+			};
+
+			reg_avs: avs@11500 {
+				compatible = "marvell,armada-3700-avs";
+				reg = <0x11500 0x40>;
+				clocks = <&core_clk 4>;
+				status = "disabled";
+			};
+
+			uart0: serial@12000 {
+				compatible = "marvell,armada-3700-uart";
+				reg = <0x12000 0x200>;
+				clocks = <&osc>;
+				interrupts = <GIC_SPI 11 IRQ_TYPE_LEVEL_HIGH>;
+				interrupt-names = "irq_sum";
+				status = "disabled";
+			};
+
+			uart1: serial@12200 {
+				compatible = "marvell,armada-3700-uart-ext";
+				reg = <0x12200 0x30>,
+					<0x8a00 0x30>;
+				clocks = <&osc>;
+				interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>,
+						<GIC_SPI 30 IRQ_TYPE_LEVEL_HIGH>;
+				interrupt-names = "irq_rx", "irq_tx";
+				status = "disabled";
+			};
+
+			core_clk: core-clocks@13000 {
+				compatible = "marvell,armada-3700-core-clock";
+				reg = <0x13000 0x6000>;
+				#clock-cells = <1>;
+			};
+
+			ngateclk: north-bridge-gate-clk@13014 {
+				compatible = "marvell,armada-3700-north-bridge-gating-clock";
+				reg = <0x13014 0x4>;
+				#clock-cells = <1>;
+			};
+
+			wdt: watchdog-timer@8300 {
+				compatible = "marvell,armada-3700-wdt";
+				reg = <0xd064 0x4>,
+				      <0x8300 0x40>;
+				clocks = <&osc>;
+			};
+
+			npinctrl: north-bridge-pinctrl@13830 {
+				compatible = "marvell,armada-3700-nb-pinctrl";
+				reg = <0x13830 0x4>;
+
+				spi0_pins: spi-pins-0 {
+					marvell,pins = "mpp36";
+					marvell,function = "spi";
+				};
+
+				spi_quad_pins: spi-quad-pins {
+					marvell,pins = "mpp15", "mpp16";
+					marvell,function = "spi-quad";
+				};
+
+				mmc_pins: mmc-pins {
+					marvell,pins = "mpp27", "mpp28", "mpp29", "mpp30",
+							"mpp31", "mpp32", "mpp33", "mpp34", "mpp35";
+					marvell,function = "mmc";
+				};
+
+				uart1_pins: uart1_pins {
+					marvell,pins = "mpp18", "mpp19";
+					marvell,function = "uart2";
+				};
+			};
+
+			cpu_pm_clk: cpu-pm-clk@14018 {
+				compatible = "marvell,armada-37xx-cpu-pm-clk";
+				reg = <0x14018 0x1C>;
+				#clock-cells = <1>;
+				clocks = <&core_clk 4>;
+			};
+
+			sgateclk: south-bridge-gate-clk@18014 {
+				compatible = "marvell,armada-3700-south-bridge-gating-clock";
+				reg = <0x18014 0x4>;
+				#clock-cells = <1>;
+			};
+
+			spinctrl: south-bridge-pinctrl@18830 {
+				compatible = "marvell,armada-3700-sb-pinctrl";
+				reg = <0x18830 0x4>;
+
+				sdio_pins: sdio-pins {
+					marvell,pins = "mpp24", "mpp25", "mpp26", "mpp27", "mpp28", "mpp29";
+					marvell,function = "sdio";
+				};
+
+				cd_pins: cd-pins {
+					marvell,pins = "mpp2";
+					marvell,function = "gpio";
+				};
+			};
+
+			eth0: ethernet@30000 {
+				   compatible = "marvell,armada3700-neta";
+				   reg = <0x30000 0x4000>;
+				   interrupts = <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>;
+				   mac-address = [00 50 43 01 02 03];
+				   clocks = <&sgateclk 5>;
+				   status = "disabled";
+			};
+
+			mdio@32004 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				compatible = "marvell,orion-mdio";
+				reg = <0x32004 0x4>;
+			};
+
+			eth1: ethernet@40000 {
+				compatible = "marvell,armada3700-neta";
+				reg = <0x40000 0x4000>;
+				interrupts = <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
+				mac-address = [00 50 43 01 02 33];
+				clocks = <&sgateclk 4>;
+				status = "disabled";
+			};
+			gpio_nb: gpio@13800 {
+				compatible = "marvell,armada3700-gpio";
+				reg = <0x13800 0x30
+					0x13c00 0x20>;
+				ngpios = <36>;
+				gpiobase = <0>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <GIC_SPI 51 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 52 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 53 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 54 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 57 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 58 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 152 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 153 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 154 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 155 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			gpio_sb: gpio@18800 {
+				compatible = "marvell,armada3700-gpio";
+				reg = <0x18800 0x30
+					0x18c00 0x20>;
+				ngpios = <30>;
+				gpiobase = <36>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <GIC_SPI 160 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 159 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 158 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 157 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 156 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			u3d@50000 {
+				compatible = "marvell,mvebu-u3d";
+				/* 0: 0x50000: USB 3.0 Device port 0: DEV_INFO_REG(0:15 - version_id) */
+				reg = <0x50000 0x2000>;
+				interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
+				clocks = <&sgateclk 17>;
+				status = "disabled";
+			};
+
+			udc@54100 {
+				compatible = "marvell,mv-udc";
+				reg = <0x54100 0x2000>;
+				interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
+				clocks = <&sgateclk 17>;
+				status = "disabled";
+			};
+			usb3@58000 {
+				compatible = "marvell,armada-3700-xhci";
+				reg = <0x58000 0x4000>;
+				interrupts = <GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>;
+				clocks = <&sgateclk 17>;
+				separated-phys-for-usb2-usb3;
+				needs-reset-on-resume;
+				status = "disabled";
+			};
+
+			utmi_usb32: utmi@5d000 {
+				compatible = "marvell,armada-3700-utmi-phy";
+				reg = <0x5d000 0x1000>;
+				utmi-port = <UTMI_PHY_TO_USB3_HOST0>;
+				#phy-cells = <0>;
+				status = "disabled";
+			};
+
+			usb_phy: usb_phy@5d800 {
+				compatible = "marvell,armada-3700-usb-phy";
+				reg = <0x5d800 0x100>;
+				interrupts = <GIC_SPI 16 IRQ_TYPE_LEVEL_HIGH>;
+				status = "disabled";
+			};
+
+			usb@5e000 {
+				compatible = "marvell,armada-3700-ehci";
+				reg = <0x5e000 0x1000>;
+				interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
+				needs-reset-on-resume;
+				status = "disabled";
+			};
+
+			utmi_usb2: utmi@5f000 {
+				compatible = "marvell,armada-3700-utmi-phy";
+				reg = <0x5f000 0x1000>;
+				utmi-port = <UTMI_PHY_TO_USB2_HOST0>;
+				#phy-cells = <0>;
+				status = "disabled";
+			};
+
+			xor@60900 {
+				compatible = "marvell,armada-3700-xor";
+				reg = <0x60900 0x100
+				       0x60b00 0x100>;
+
+				xor10 {
+					interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
+					dmacap,memcpy;
+					dmacap,xor;
+				};
+				xor11 {
+					interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
+					dmacap,memcpy;
+					dmacap,xor;
+					dmacap,memset;
+				};
+			};
+
+
+			sdhci1: sdhci@d0000 {
+				compatible = "marvell,armada-3700-sdhci",
+					     "marvell,sdhci-xenon";
+				reg = <0xd0000 0x300>,
+				      <0x1e808 0x4>;
+				interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
+				clock-names = "core";
+				clocks = <&core_clk 7>;
+				status = "disabled";
+			};
+
+			sdhci0: sdhci@d8000 {
+				compatible = "marvell,armada-3700-sdhci",
+					     "marvell,sdhci-xenon";
+				reg = <0xd8000 0x300
+				       0x17808 0x4>;
+				interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
+				clock-names = "core";
+				clocks = <&core_clk 7>;
+				status = "disabled";
+			};
+
+			sata@e0000 {
+				compatible = "marvell,armada-3700-ahci";
+				reg = <0xe0000 0x178>;
+				interrupts = <GIC_SPI 27 IRQ_TYPE_LEVEL_HIGH>;
+				clocks = <&ngateclk 3>;
+				status = "disabled";
+			};
+
+			gic: interrupt-controller@1d00000 {
+				compatible = "arm,gic-v3";
+				#interrupt-cells = <3>;
+				interrupt-controller;
+				interrupts = <GIC_PPI 9 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_HIGH)>;
+				reg = <0x1d00000 0x10000>, /* GICD */
+				      <0x1d40000 0x40000>; /* GICR */
+			};
+
+			a3700_comphy: comphy@18300 {
+				compatible = "marvell,mvebu-comphy", "marvell,armada-3700-comphy";
+				reg = <0x18300 0x300>, /* comphy */
+				      <0x1F000 0x1000>, /* serdes */
+				      <0x5c000 0x1000>, /* usb3_gbe1_phy */
+				      <0xe0178 0x8>; /* lane2 indirect access */
+				reg-names = "comphy", "serdes", "usb3_gbe1_phy", "indirect";
+				#phy-cells = <2>;
+			};
+
+			bm: bm@c0000 {
+				compatible = "marvell,armada-380-neta-bm";
+				reg = <0xc0000 0xac>;
+				clocks = <&sgateclk 9>;
+				internal-mem = <&bm_bppi>;
+				status = "disabled";
+			};
+
+			bm_bppi: bm-bppi {
+				compatible = "mmio-sram";
+				reg = <0xc8000 0x100000>;
+				clocks = <&sgateclk 9>;
+				no-memory-wc;
+				status = "disabled";
+			};
+
+			eip97: eip97@90000 {
+				compatible = "inside-secure,safexcel-eip97";
+				reg = <0x90000 0x20000>;
+				interrupt-names = "eip_out", "ring0", "ring1",
+						  "ring2", "ring3", "eip_addr";
+				interrupts = <GIC_SPI 19 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 20 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 21 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 22 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 23 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
+				dma-coherent;
+				dma-bus-width = <32>;
+				cell-index = <0>;
+				status = "disabled";
+			};
+		};
+
+		pcie0: pcie@d0070000 {
+			compatible = "marvell,armada-3700-pcie";
+			device_type = "pci";
+			status = "disabled";
+			reg = <0 0xd0070000 0 0x20000>;
+			#address-cells = <3>;
+			#size-cells = <2>;
+			bus-range = <0x00 0xff>;
+			interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>;
+			#interrupt-cells = <1>;
+			msi-parent = <&pcie0>;
+			msi-controller;
+			clocks = <&sgateclk 14>;
+			ranges = <0x82000000 0 0xd8200000   0 0xd8200000 0 0x1000000 /* Port 0 MEM */
+				  0x81000000 0 0xd9200000   0 0xd9200000 0 0x10000>; /* Port 0 IO*/
+			interrupt-map-mask = <0 0 0 7>;
+			interrupt-map = <0 0 0 1 &pcie_intc 0>,
+					<0 0 0 2 &pcie_intc 1>,
+					<0 0 0 3 &pcie_intc 2>,
+					<0 0 0 4 &pcie_intc 3>;
+			pcie_intc: interrupt-controller {
+				interrupt-controller;
+				#interrupt-cells = <1>;
+			};
+		};
+	};
+};

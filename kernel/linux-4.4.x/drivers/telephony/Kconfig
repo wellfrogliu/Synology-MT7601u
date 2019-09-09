@@ -1,0 +1,46 @@
+#
+# Telephony device configuration
+#
+
+menuconfig PHONE
+	bool "Telephony devices support"
+	depends on SYNO_LSP_ARMADA_16_12
+	default y
+	---help---
+	  Say Y here to get to see options for hardware telephony devices.
+	  This option alone does not add any kernel code.
+
+	  If you say N, all options in this submenu will be skipped and disabled.
+
+if PHONE && SYNO_LSP_ARMADA_16_12
+
+config MV_INCLUDE_TDM
+	bool "Mvebu TDM Telephony"
+	depends on ARCH_MVEBU && SYNO_LSP_ARMADA_16_12 && !SYNO_LSP_ARMADA_17_02_02
+	default y
+	---help---
+	  This driver supports the TDM-based telephony interface
+	  units in the following Marvell SoC families:
+	  1. ARMADA-370.
+	  2. ARMADA-375.
+	  3. ARMADA-38x.
+	  4. ARMADA-XP.
+
+config MVEBU_PHONE
+	bool "Mvebu TDM Telephony"
+	depends on ARCH_MVEBU && SYNO_LSP_ARMADA_17_02_02
+	default y
+	---help---
+	  This driver supports the TDM-based telephony interface
+	  units in the following Marvell SoC families:
+	  1. ARMADA-370.
+	  2. ARMADA-375.
+	  3. ARMADA-38x.
+	  4. ARMADA-XP.
+	  5. ARMADA-7k/8k.
+
+if (MV_INCLUDE_TDM && SYNO_LSP_ARMADA_16_12) || (MVEBU_PHONE && SYNO_LSP_ARMADA_17_02_02)
+	source "drivers/telephony/mvebu_phone/Kconfig"
+endif
+
+endif # PHONE

@@ -1,0 +1,80 @@
+/dts-v1/;
+
+#include "../../../../../include/soc/realtek/memory.h"
+/memreserve/ ROOTFS_NORMAL_START        ROOTFS_NORMAL_SIZE          ; /* RootFS */
+#include "rtd-1293.dtsi"
+
+/ {
+
+	chosen {
+		bootargs = "earlycon=uart8250,mmio32,0x98007800 console=ttyS0,115200 androidboot.hardware=kylin loglevel=8";
+		linux,initrd-start = <ROOTFS_NORMAL_START>;
+		linux,initrd-end = <ROOTFS_NORMAL_END>;
+		syno_version = "SYNO-DTB-DSM6-2-22128";
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0 0x40000000>;	/* 1024 MB */
+	};
+
+	mem_remap {
+		compatible = "Realtek,rtk1295-mem_remap";
+		reg = <RBUS_BASE_PHYS RBUS_BASE_SIZE>,
+		      <RPC_COMM_PHYS RPC_COMM_SIZE>,
+		      <ACPU_FIREWARE_PHYS ACPU_FIREWARE_SIZE>,
+		      <ION_AUDIO_HEAP_PHYS ION_AUDIO_HEAP_SIZE>,
+		      <RPC_RINGBUF_PHYS RPC_RINGBUF_SIZE>,
+		      <ACPU_IDMEM_PHYS ACPU_IDMEM_SIZE>;
+	};
+
+	power-management{
+		compatible = "Realtek,power-management";
+
+		/* GPIO Wakeup */
+		wakeup-gpio-enable = /* (0) disable (1) enable */
+			<1>; /* Wakeup from BT : disable */
+		wakeup-gpio-list = /* <&rtk_iso_gpio {num} {force input (0) } {default N/A (0)] }> */
+			<&rtk_iso_gpio 23 0 0>; /* BT wakeup host pin */
+		wakeup-gpio-activity = /* (0) active low (1) active high*/
+			<0>; /* BT : high activity */
+	};
+
+	uart1: serial1@9801B200 {
+		compatible = "snps,dw-apb-uart";
+		status = "okay";
+	};
+
+        i2c_1: i2c@0x98007C00 {
+                compatible = "Realtek,rtk-i2c";
+                status = "okay";
+        };
+
+        i2c_2: i2c@0x9801B700 {
+                compatible = "Realtek,rtk-i2c";
+                status = "okay";
+        };
+
+	pcie@9804E000 {
+		compatible = "Realtek,rtd1295-pcie-slot1";
+		iso-gpios = <&rtk_iso_gpio 34 1 0>;
+		status = "disabled";
+	};
+
+	sata@9803F000 {
+		compatible = "Realtek,ahci-sata";
+		tx-driving = <8>;
+		blink-gpios = <&rtk_misc_gpio 18 1 0>, <&rtk_misc_gpio 19 1 0>;
+	};
+
+	rtk_usb_power_manager {
+		compatible = "Realtek,rtd129x-usb-power-manager";
+		realtek,u3host-power-gpio = <&rtk_misc_gpio 22 1 0>; /*1296 u3host power, output, default low */
+		realtek,type_c-power-gpio = <&rtk_misc_gpio 23 1 0>; /*TypeC power, output, default low */
+	};
+
+	dwc3_u2host: rtk_dwc3_u2host@98013E00 {
+		compatible = "Realtek,rtd129x-dwc3-u2h";
+		status = "disabled";
+	};
+};

@@ -1,0 +1,275 @@
+menu "System Features"
+
+config SYNO_SYSTEM_CALL
+	bool
+	default y
+
+config SYNO_USB_FLASH_BOOT
+	bool "Boot From USB Flash"
+	depends on SYNO_FIXED_DISK_NAME
+	default y
+
+config SYNO_USB_FLASH_BOOT_KVMX64
+	bool "Boot From USB Flash"
+	depends on SYNO_USB_FLASH_BOOT && SYNO_KVMX64
+	default y
+
+config SYNO_USB_FLASH_DEVICE_INDEX
+	int "USB Boot Flash Device Number"
+	default "255" if SYNO_USB_FLASH_BOOT
+
+config SYNO_USB_FLASH_DEVICE_NAME
+	string "USB Boot Flash Device Name"
+	default "synoboot" if SYNO_USB_FLASH_BOOT
+
+config SYNO_USB_FLASH_DEVICE_PATH
+	string "USB Boot Flash Device Path"
+	default "/dev/synoboot" if SYNO_USB_FLASH_BOOT
+
+config SYNO_INSTALL_FLAG
+	bool "Avoid Users Mounting USB Boot Flash"
+	default y
+	depends on SYNO_USB_FLASH_BOOT
+
+config SYNO_DYN_MODULE_INSTALL
+	bool "Dynamic Module Installation"
+	default y
+	depends on SYNO_USB_FLASH_BOOT
+
+config SYNO_ICH_GPIO_CTRL
+	bool "X86 PCH/ICH GPIO Control"
+	default y
+	depends on X86_64
+
+config SYNO_X86_PINCTRL_GPIO
+	bool "X86 GPIO Control With Pinctrl Subsystem"
+	default y
+	depends on X86_64
+	select PINCTRL
+	select GPIOLIB
+
+config SYNO_RTD_PINCTRL_GPIO
+       bool "RTD GPIO Control With Pinctrl Subsystem"
+       default y
+       depends on SYNO_RTD129X
+       select PINCTRL
+
+config SYNO_X86_PINCTRL_CALC_GPIOBASE
+	bool "X86 GPIO Pinctrl new formula"
+	default y
+	depends on X86_64 && SYNO_X86_PINCTRL_GPIO
+
+config SYNO_X86_CORETEMP
+	bool "X86 Core Temperature Detection"
+	default y
+	depends on X86
+
+config SYNO_BOOT_SATA_DOM
+	bool "Synology boot device SATADOM"
+	default n
+	depends on SYNO_USB_FLASH_BOOT
+
+config SYNO_SATA_DOM_VENDOR
+	string "SATA DOM Vendor"
+	default "SATADOM-"
+	depends on SYNO_BOOT_SATA_DOM
+
+config SYNO_SATA_DOM_MODEL
+	string "SATA DOM Model"
+	default "TYPE D 3SE"
+	depends on SYNO_BOOT_SATA_DOM
+
+config SYNO_SATA_DOM_VENDOR_SECOND_SRC
+	string "SATA DOM Vendor Second Source"
+	default "SATADOM"
+	depends on SYNO_BOOT_SATA_DOM
+
+config SYNO_SATA_DOM_MODEL_SECOND_SRC
+	string "SATA DOM Model Second Source"
+	default "D150SH"
+	depends on SYNO_BOOT_SATA_DOM
+
+config SYNO_ISCSI_DEVICE
+	bool "Refactor iSCSI Device Name"
+	default y
+	depends on SYNO_FIXED_DISK_NAME
+
+config SYNO_ISCSI_LOOPBACK_DEVICE
+	bool "Loopback Iscsi device name"
+	default y
+	depends on SYNO_FIXED_DISK_NAME
+
+config SYNO_ISCSI_DEVICE_PREFIX
+	string "The prefix of iSCSI device"
+	default "isd"
+	depends on SYNO_ISCSI_DEVICE
+
+config SYNO_ISCSI_REVERT_SUPPORT_PFMALLOC
+	bool "Revert iscsi initiator support PF_MALLOC"
+	default y
+	depends on ISCSI_TCP
+
+config SYNO_SATA_DEVICE_PREFIX
+	string "The prefix of sata device"
+	default "sd"
+	depends on SYNO_FIXED_DISK_NAME
+
+config SYNO_CACHE_DEVICE_PREFIX
+	string "The prefix of sata cache device"
+	default "nvc"
+	depends on SYNO_PCI_HOST_SATA_CACHE
+
+config SYNO_X86_AUTO_POWER_ON
+	bool "Supporting Auto-Poweron on X86_64 Platforms"
+	default n
+	depends on X86_64
+
+config SYNO_ECC_NOTIFICATION
+	bool "Add ECC notification support"
+	default y
+	depends on X86_64
+
+config SYNO_DISPLAY_CPUINFO
+	bool "Support display CPU Infomation"
+	default y
+
+config SYNO_MULTI_CPU_NUM
+	int "Support display CPU Number Information"
+	default 2
+	depends on (SYNO_GRANTLEY || SYNO_PURLEY) && SYNO_DISPLAY_CPUINFO
+
+config SYNO_IT87_SUPERIO_RW
+	bool "Support IT87 super IO pins r/w"
+	default y
+	depends on X86_64 && SENSORS_IT87
+
+config SYNO_KVMX64_PCI_SLOT_SYSTEM
+	int "Fixed disk name support for virtio scsi disk"
+	default 11
+	depends on SYNO_KVMX64 && SYNO_FIXED_DISK_NAME
+
+config SYNO_KVMX64_PCI_SLOT_BOOT
+	int "Reserve virtio pci slot for synoboot"
+	default 10
+	depends on SYNO_KVMX64 && SYNO_USB_FLASH_BOOT
+
+config SYNO_VHOST_SCSI_TMF_UNSUPPORTED
+	bool "scsi command abort when using vhost-scsi"
+	default y
+	depends on SYNO_KVMX64
+
+config SYNO_KVM_IGNORE_MSRS
+	bool "skip logging of ignored MSRS"
+	default y
+	depends on KVM
+
+config SYNO_EXPORT_GET_CMDLINE
+	bool "export the helper function to get the cmdline of a task_struct"
+	default y
+
+config SYNO_GPIO
+	  bool "Employ refactored GPIO-functions"
+	  default n
+
+config SYNO_PSTATE_CALC
+	bool "Compare P-state ratio only"
+	default y
+
+config SYNO_DMA_COHERENT_POOL_1M
+	bool "increase DMA coherent pool from 256K to 1M"
+	default n
+
+config SYNO_DISK_EH_FLAG
+	bool "report to userspace if kernel is in SCSI error handling"
+	default y
+
+endmenu #System Features
+
+menu "Boot Arguments"
+
+config SYNO_HW_VERSION
+	bool "Hardware Model String"
+	default y
+
+config SYNO_HW_REVISION
+	bool "Hardware Revision String"
+	default y
+
+config SYNO_INTERNAL_HD_NUM
+	bool "Internal HDDs For Sequential Spin-Up"
+	default y
+
+config SYNO_INTERNAL_NETIF_NUM
+	bool "Number Of Network Interfaces"
+	default y
+
+config SYNO_AHCI_SWITCH
+	bool "Enable/Disable AHCI Initialization"
+	default y
+
+config SYNO_SATA_MV_LED
+	bool "Special Configuration For SATA LED/GPIO"
+	default y
+
+config SYNO_MAC_ADDRESS
+	bool "Read MAC Address from bootloader or flash"
+	default y
+	depends on SYNO_INTERNAL_NETIF_NUM
+
+config SYNO_DEBUG_FLAG
+	bool "Debug Flag"
+	default y
+
+config SYNO_SERIAL
+	bool "Serial Number"
+	default y
+
+config SYNO_FACTORY_USB_FAST_RESET
+	bool "USB fast reset"
+	default y
+
+config SYNO_FACTORY_USB3_DISABLE
+	bool "Disable USB3"
+	default y
+
+config SYNO_EFI
+	bool "Enable EFI runtime service"
+	depends on (SYNO_BROMOLOW || SYNO_GRANTLEY) && EFI
+	default y
+
+endmenu #Boot Arguments
+
+menu "Kernel Core Enhancements"
+
+config SYNO_RCU_CPU_STALL_SUPPRESS
+	bool "Disable RCU CPU Stall Detector"
+	default y
+
+config SYNO_KERNEL_UTC_TIME
+	bool "Keep UTC Time In Kernel And RTC"
+	default y
+
+config SYNO_HIDE_LOWMEM_WARNING
+	bool "Do Not Show Nowait Page Allocating Fail Warning"
+	default y
+
+config SYNO_SOFTLOCKUP_COUNTER
+	bool "Trigger soft lockup detector in limited times"
+	default y
+	depends on LOCKUP_DETECTOR
+
+config SYNO_SOFTLOCKUP_COUNTER_MAX
+	int "The max number to trigger soft lockup detector."
+	default 10
+	depends on SYNO_SOFTLOCKUP_COUNTER
+
+config SYNO_SOFTLOCKUP_THRESH_EXTENSION
+    bool "Extend soft lockup threshold."
+	default y
+	depends on LOCKUP_DETECTOR
+
+config SYNO_DEVICES_LIST_REORDER
+	bool "Rollback devices_kset list order to the same as kernel 3.10"
+	default y
+
+endmenu #Kernel Core Enhancements

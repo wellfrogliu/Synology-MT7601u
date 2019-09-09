@@ -1,0 +1,4 @@
+config PINCTRL_RTD129X
+	bool "RTD129X pin controller driver"
+	select PINMUX
+	select GENERIC_PINCONF

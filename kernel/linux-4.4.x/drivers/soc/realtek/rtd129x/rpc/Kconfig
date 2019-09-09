@@ -1,0 +1,7 @@
+config RTK_RPC
+    bool "RPC driver"
+    depends on RTK_MEM_REMAP
+    default n
+    help
+      Realtek RPC driver with audio CPU
+

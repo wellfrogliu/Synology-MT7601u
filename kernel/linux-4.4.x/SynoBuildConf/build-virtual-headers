@@ -1,0 +1,30 @@
+#!/bin/bash
+# Copyright (c) 2000-2016 Synology Inc. All rights reserved.
+# vim:ft=sh
+
+export ARCH=${ARCH}
+case "$BUILD_TARGET" in
+	APOLLOLAKE|DENVERTON|KVMX64|BROADWELLNK|PURLEY|COFFEELAKE)
+		export CROSS_COMPILE=${ToolChainPrefix64} CC=${CC64}
+		KERNEL_CC=${CC64}
+		;;
+	*)
+		CC=`echo ${CC} | awk -F" " '{print $1}'`
+		export CROSS_COMPILE=${ToolChainPrefix} CC="${CC}"
+		KERNEL_CC="${CC}"
+		;;
+esac
+
+case "$BUILD_TARGET" in
+	*)
+		cp -f synoconfigs/$PLATFORM_ABBR .config
+		;;
+esac
+
+# Install kernel headers
+make oldconfig
+make prepare
+make CROSS_COMPILE="$ToolChainPrefix32" headers_install
+
+cp -fa include/linux/syno_autoconf.h usr/include/linux/syno_autoconf.h
+install -Dm644 include/linux/synobios.h usr/include/linux/synobios.h

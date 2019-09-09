@@ -1,0 +1,74 @@
+Marvell Armada 7K/8K Platforms Device Tree Bindings
+---------------------------------------------------
+
+Boards using a SoC of the Marvell Armada 7K or 8K families must carry
+the following root node property:
+
+ - compatible, with one of the following values:
+
+SoC:
+   - "marvell,armada7020", "marvell,ap806-dual", "marvell,ap806"
+      when the SoC being used is the Armada 7020
+
+   - "marvell,armada7040", "marvell,ap806-quad", "marvell,ap806"
+      when the SoC being used is the Armada 7040
+
+   - "marvell,armada8020", "marvell,ap806-dual", "marvell,ap806"
+      when the SoC being used is the Armada 8020
+
+   - "marvell,armada8040", "marvell,ap806-quad", "marvell,ap806"
+      when the SoC being used is the Armada 8040
+
+Boards:
+   - "marvell,armada7040-db-A", "marvell,armada7040-db"
+      when the board being used is the Armada 7040 Development board
+
+   - "marvell,armada7040-db-B", "marvell,armada7040-db"
+      when the board being used is the Armada 7040 Development board
+
+   - "marvell,armada7040-db-C", "marvell,armada7040-db"
+      when the board being used is the Armada 7040 Development board
+
+   - "marvell,armada7040-db-E", "marvell,armada7040-db"
+      when the board being used is the Armada 7040 Development board
+
+   - "marvell,armada7040-db-D", "marvell,armada7040-db"
+      when the board being used is the Armada 7040 Development board
+
+   - "marvell,armada7040-db-nand", "marvell,armada7040-db"
+      when the board being used is the Armada 7040 Development board
+
+   - "marvell,armada7040-db-all-pcie", "marvell,armada7040-db"
+      when the board being used is the Armada 7040 Development board
+
+   - "marvell,armada7040-pd"
+      when the board being used is the Armada 7040 emulation platform
+
+   - "marvell,armada7040-pcac"
+      when the board being used is the Armada 7040 pcac-db emulation platform
+
+   - "marvell,armada8040-db-A", "marvell,armada8040-db"
+      when the board being used is the Armada 8040 Development board
+
+   - "marvell,armada8040-db-C", "marvell,armada8040-db"
+      when the board being used is the Armada 8040 Development board
+
+   - "marvell,armada8040-db-B", "marvell,armada8040-db"
+      when the board being used is the Armada 8040 Development board
+
+   - "marvell,armada8040-db-D", "marvell,armada8040-db"
+      when the board being used is the Armada 8040 Development board
+
+   - "marvell,armada8040-db-E", "marvell,armada8040-db"
+      when the board being used is the Armada 8040 Development board
+
+   - "marvell,armada8040-db-A0", "marvell,armada8040-db"
+      when the board being used is the Armada 8040 Development board
+
+   - "marvell,armada8040-mcbin"
+      when the board being used is the MACCHIATOBin community board
+
+Example:
+
+compatible = "marvell,armada7040-db-router", "marvell,armada7040-db-nand", "marvell,armada7040-db-all-pcie", "marvell,armada7040-pd",
+	     "marvell,armada7040-db", "marvell,armada7040", "marvell,ap806-quad", "marvell,ap806";

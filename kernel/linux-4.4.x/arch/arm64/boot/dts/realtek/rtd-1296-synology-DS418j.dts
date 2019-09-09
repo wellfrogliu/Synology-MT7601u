@@ -1,0 +1,92 @@
+/dts-v1/;
+
+#include "rtd-1296.dtsi"
+
+/ {
+	chosen {
+		bootargs = "earlycon=uart8250,mmio32,0x98007800 console=ttyS0,115200 androidboot.hardware=kylin loglevel=8";
+		linux,initrd-start = <ROOTFS_NORMAL_START>;
+		linux,initrd-end = <ROOTFS_NORMAL_END>;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0 0x40000000>;	/* 1024 MB */
+	};
+
+	mem_remap {
+		compatible = "Realtek,rtk1295-mem_remap";
+		reg =   <RBUS_BASE_PHYS RBUS_BASE_SIZE>,
+			<RPC_COMM_PHYS RPC_COMM_SIZE>,
+			<ACPU_FIREWARE_PHYS ACPU_FIREWARE_SIZE>,
+			<ION_AUDIO_HEAP_PHYS ION_AUDIO_HEAP_SIZE>,
+			<RPC_RINGBUF_PHYS RPC_RINGBUF_SIZE>,
+			<ACPU_IDMEM_PHYS ACPU_IDMEM_SIZE>;
+	};
+    rtk,ion {
+		compatible = "Realtek,rtk-ion";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		rtk,ion-heap@0 {    /* SYSTEM_HEAP */
+		    compatible = "Realtek,rtk-ion-reserve";
+		    reg = <0>;
+		    rtk,memory-reservation-size = <0x0>;
+		};
+		rtk,ion-heap@1 {    /* System contig */
+		    compatible = "Realtek,rtk-ion-reserve";
+		    reg = <1>;
+		    rtk,memory-reservation-size = <0x0>;
+		};
+		rtk,ion-heap@4 {    /* DMA_HEAP */
+		    compatible = "Realtek,rtk-ion-reserve";
+		    reg = <4>;
+		    rtk,memory-reservation-size = <0x0>;
+		};
+        rtk,ion-heap@8 {    /* Audio */
+            compatible = "Realtek,rtk-ion-reserve";
+            reg = <8>;
+        };
+        rtk,ion-heap@7 {    /* TYPE_MEDIA */
+            compatible = "Realtek,rtk-ion-reserve";
+            reg = <7>;
+        };
+    };
+
+	power-management{
+		compatible = "Realtek,power-management";
+
+	/* GPIO Wakeup */
+	wakeup-gpio-enable = /* (0) disable (1) enable */
+		<1>; /* Wakeup from BT : disable */
+		//<1>; /* Wakeup from WiFi : disable */
+	wakeup-gpio-list = /* <&rtk_iso_gpio {num} {force input (0) } {default N/A (0)] }> */
+		<&rtk_iso_gpio 23 0 0>; /* BT wakeup host pin */
+		//<&rtk_iso_gpio 33 0 0>; /* WiFi wakeup host pin */
+	wakeup-gpio-activity = /* (0) active low (1) active high*/
+		<0>; /* BT : high activity */
+		//<0>; /* Wifi : high activity */
+	};
+
+	uart1: serial1@9801B200 {
+		compatible = "snps,dw-apb-uart";
+		status = "okay";
+	};
+
+	pcie@9804E000 {
+		compatible = "Realtek,rtd1295-pcie-slot1";
+		iso-gpios = <&rtk_iso_gpio 21 1 0>;
+	};
+
+	sata@9803F000 {
+		compatible = "Realtek,ahci-sata";
+		tx-driving = <8>;
+		blink-gpios = <&rtk_misc_gpio 18 1 0>, <&rtk_misc_gpio 19 1 0>;
+	};
+	
+	rtk_usb_power_manager {
+		compatible = "Realtek,rtd129x-usb-power-manager";
+		realtek,u3host-power-gpio = <&rtk_misc_gpio 22 1 0>; /*1296 u3host power, output, default low */
+		realtek,type_c-power-gpio = <&rtk_misc_gpio 23 1 0>; /*TypeC power, output, default low */
+	};
+
+};

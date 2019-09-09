@@ -1,0 +1,62 @@
+config PINCTRL_MVEBU
+	bool
+	depends on SYNO_LSP_ARMADA_16_12 || PLAT_ORION
+	select PINMUX
+	select PINCONF
+
+config PINCTRL_ARMADA_3700
+	bool
+	depends on SYNO_LSP_ARMADA_16_12
+	select PINCTRL_MVEBU
+
+config PINCTRL_ARMADA_AP806
+	bool
+	depends on SYNO_LSP_ARMADA_16_12
+	select PINCTRL_MVEBU
+
+config PINCTRL_ARMADA_CP110
+	bool
+	depends on SYNO_LSP_ARMADA_16_12
+	select PINCTRL_MVEBU
+
+if PLAT_ORION
+
+config PINCTRL_DOVE
+	bool
+	select PINCTRL_MVEBU
+	select MFD_SYSCON
+
+config PINCTRL_KIRKWOOD
+	bool
+	select PINCTRL_MVEBU
+
+config PINCTRL_ARMADA_370
+	bool
+	select PINCTRL_MVEBU
+
+config PINCTRL_ARMADA_375
+	bool
+	select PINCTRL_MVEBU
+
+config PINCTRL_ARMADA_38X
+	bool
+	select PINCTRL_MVEBU
+
+config PINCTRL_ARMADA_39X
+	bool
+	select PINCTRL_MVEBU
+
+config PINCTRL_ARMADA_XP
+	bool
+	select PINCTRL_MVEBU
+
+config PINCTRL_MSYS
+	bool
+	depends on SYNO_LSP_ARMADA_16_12
+	select PINCTRL_MVEBU
+
+config PINCTRL_ORION
+	bool
+	select PINCTRL_MVEBU
+
+endif

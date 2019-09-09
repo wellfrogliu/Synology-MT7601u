@@ -1,0 +1,212 @@
+/dts-v1/;
+
+#include "../../../../../include/soc/realtek/memory.h"
+/memreserve/ ION_MEDIA_HEAP_PHYS1       ION_MEDIA_HEAP_SIZE1        ; /* 0x02900000 ~ 0x08cfffff */
+/memreserve/ ION_AUDIO_HEAP_PHYS        ION_AUDIO_HEAP_SIZE         ; /* 0x02600000 ~ 0x028fffff */
+/memreserve/ ION_MEDIA_HEAP_PHYS2       ION_MEDIA_HEAP_SIZE2        ; /* 0x10100000 ~ 0x132fffff */
+/memreserve/ ROOTFS_NORMAL_START        ROOTFS_NORMAL_SIZE          ; /* RootFS */
+
+#include "rtd-1296.dtsi"
+
+/ {
+
+	chosen {
+		bootargs = "earlycon=uart8250,mmio32,0x98007800 console=ttyS0,115200 androidboot.hardware=kylin loglevel=8";
+		linux,initrd-start = <ROOTFS_NORMAL_START>;
+		linux,initrd-end = <ROOTFS_NORMAL_END>;
+		syno_version = "SYNO-DTB-DSM6-2-22128";
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0 0x80000000>;	/* 2048 MB */
+	};
+
+	mem_remap {
+		compatible = "Realtek,rtk1295-mem_remap";
+		reg = <RBUS_BASE_PHYS RBUS_BASE_SIZE>,
+		      <RPC_COMM_PHYS RPC_COMM_SIZE>,
+		      <ACPU_FIREWARE_PHYS ACPU_FIREWARE_SIZE>,
+		      <ION_AUDIO_HEAP_PHYS ION_AUDIO_HEAP_SIZE>,
+		      <RPC_RINGBUF_PHYS RPC_RINGBUF_SIZE>,
+		      <ACPU_IDMEM_PHYS ACPU_IDMEM_SIZE>,
+		      <ION_MEDIA_HEAP_PHYS1 ION_MEDIA_HEAP_SIZE1>,
+		      <ION_MEDIA_HEAP_PHYS2 ION_MEDIA_HEAP_SIZE2>;
+	};
+
+	power-management{
+		compatible = "Realtek,power-management";
+
+		/* GPIO Wakeup */
+		wakeup-gpio-enable = /* (0) disable (1) enable */
+			<1>, /* Wakeup from BT : disable */
+			<1>; /* Wakeup from WiFi : disalbe */
+		wakeup-gpio-list = /* <&rtk_iso_gpio {num} {force input (0) } {default N/A (0)] }> */
+			<&rtk_iso_gpio 23 0 0>, /* BT wakeup host pin */
+			<&rtk_iso_gpio 33 0 0>; /* Wifi wakeup host pin */
+		wakeup-gpio-activity = /* (0) active low (1) active high*/
+			<0>, /* BT : high activity */
+			<0>; /* Wifi : high activity */
+	};
+
+	uart1: serial1@9801B200 {
+		compatible = "snps,dw-apb-uart";
+		status = "okay";
+	};
+
+        i2c_1: i2c@0x98007C00 {
+                compatible = "Realtek,rtk-i2c";
+                status = "okay";
+        };
+
+        i2c_2: i2c@0x9801B700 {
+                compatible = "Realtek,rtk-i2c";
+                status = "okay";
+        };
+
+	nic: gmac@98016000 {
+		compatible = "Realtek,r8168";
+		iso-gpios = <&rtk_iso_gpio 32 1 1>;
+		led-cfg = <0x004F>;
+	};
+
+	pcie@9804E000 {
+		compatible = "Realtek,rtd1295-pcie-slot1";
+		iso-gpios = <&rtk_iso_gpio 34 1 1>;
+	};
+
+	sata@9803F000 {
+		compatible = "Realtek,ahci-sata";
+		tx-driving = <6>;
+		blink-gpios = <&rtk_misc_gpio 18 1 0>, <&rtk_misc_gpio 19 1 0>;
+	};
+
+
+	dwc3_u2host: rtk_dwc3_u2host@98013E00 {
+		compatible = "Realtek,rtd129x-dwc3-u2h";
+		status = "disabled";
+	};
+
+	rtk_usb_power_manager {
+		compatible = "Realtek,rtd129x-usb-power-manager";
+		realtek,u3host-power-gpio = <&rtk_misc_gpio 22 1 0>; /*1296 u3host power, output, default low */
+		realtek,type_c-power-gpio = <&rtk_misc_gpio 23 1 0>; /*TypeC power, output, default low */
+	};
+
+	rtk,ion {
+		compatible = "Realtek,rtk-ion";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		rtk,ion-heap@0 {    /* SYSTEM_HEAP */
+		    compatible = "Realtek,rtk-ion-reserve";
+		    reg = <0>;
+		    rtk,memory-reservation-size = <0x0>;
+		};
+		rtk,ion-heap@1 {    /* System contig */
+		    compatible = "Realtek,rtk-ion-reserve";
+		    reg = <1>;
+		    rtk,memory-reservation-size = <0x0>;
+		};
+		rtk,ion-heap@4 {    /* DMA_HEAP */
+		    compatible = "Realtek,rtk-ion-reserve";
+		    reg = <4>;
+		    rtk,memory-reservation-size = <0x0>;
+		};
+		rtk,ion-heap@8 {    /* Audio */
+                    compatible = "Realtek,rtk-ion-reserve";
+                    reg = <8>;
+                    rtk,memory-reserve = <
+                    ION_AUDIO_HEAP_PHYS ION_AUDIO_HEAP_SIZE ION_AUDIO_HEAP_FLAG
+                    >;
+                };
+		rtk,ion-heap@7 {    /* TYPE_MEDIA */
+                    compatible = "Realtek,rtk-ion-reserve";
+                    reg = <7>;
+                    rtk,memory-reserve = <
+                    ION_MEDIA_HEAP_PHYS1 ION_MEDIA_HEAP_SIZE1 ION_MEDIA_HEAP_FLAG1
+                    ION_MEDIA_HEAP_PHYS2 ION_MEDIA_HEAP_SIZE2 ION_MEDIA_HEAP_FLAG2
+                    >;
+		};
+	};
+
+	jpeg@9803e000 {
+		compatible = "Realtek,rtk1295-jpeg";
+		reg = <0x9803e000 0x1000>, <0x98000000 0x200>;
+		interrupts = <0 52 4>;
+	};
+
+	ve1@98040000 {
+		compatible = "Realtek,rtk1295-ve1";
+		reg = <0x98040000 0x8000>, <0x98000000 0x200>;
+		interrupts = <0 53 4>, <0 54 4>;
+	};
+
+	ve3@98048000 {
+		compatible = "Realtek,rtk1295-ve3";
+		reg = <0x98048000 0x4000>, <0x98000000 0x200>;
+		interrupts = <0 55 4>;
+	};
+
+	md@9800b000 {
+		compatible = "Realtek,rtk1295-md";
+		reg = <0x9800b000 0x1000>;
+		interrupts = <0 38 4>;  /* 70 - 32 = 38 */
+	};
+
+	se@9800c000 {
+		compatible = "Realtek,rtk1295-se";
+		reg = <0x9800c000 0x1000>;
+		interrupts = <0 20 4>;  /* 52 - 32 = 20 */
+	};
+
+	dwc3_drd_usb3phy: dwc3_drd_usb3phy {
+		phy_data_revA = /bits/ 16
+			<0x4008 0xE04A 0x6046 0x27F1 0x52F5 0x2AD3 0x000E 0x2E00 0x3591 0x521C 0xA600 0xA905 0xC000 0xEF1C 0x2000 0x0000
+			 0x000C 0x4C00 0xFC00 0x0C81 0xDE01 0x0000 0x0000 0x0000 0x0000 0x4004 0x1260 0xFF00 0xCB00 0xA03F 0xC2E0 0x2807
+			 0x947A 0x88AA 0x0057 0xAB66 0x0800 0x0000 0x040A 0x01D6 0xF842 0x3080 0x3082 0x2078 0xFFFF 0xFFFF 0x0000 0x0040
+			 0x521C 0x501C 0x521C>;
+    };
+
+	dwc3_drd_usb2phy: dwc3_drd_usb2phy {
+		compatible = "Realtek,rtd129x-usb2phy";
+		phy_data_page0_size = <9>;
+		phy_data_page0_addr = /bits/ 8 <0xE0 0xE1 0xE2 0xE3 0xE4 0xE5 0xE6 0xE7 0xF5>;
+		phy_data_page0_data = /bits/ 8 <0xE0 0x30 0x3A 0x8D 0x68 0x65 0x91 0x81 0x81>;
+		phy_data_page1_size = <8>;
+		phy_data_page1_addr = /bits/ 8 <0xE0 0xE1 0xE2 0xE3 0xE4 0xE5 0xE6 0xE7>;
+		phy_data_page1_data = /bits/ 8 <0x25 0x0F 0x60 0x00 0x00 0x0F 0x18 0xE3>;
+	};
+
+	dwc3_u3host_usb3phy: dwc3_u3host_usb3phy {
+		phy_data_addr = /bits/ 8
+			<0x00   0x01   0x02   0x03   0x04   0x05   0x06   0x07   0x08   0x09   0x0A   0x0B   0x0C   0x0D   0x0E   0x0F
+			 0x10   0x11   0x12   0x13   0x14   0x15   0x16   0x17   0x18   0x19   0x1A   0x1B   0x1C   0x1D   0x1E   0x1F
+			 0x20   0x21   0x22   0x23   0x24   0x25   0x26   0x27   0x28   0x29   0x2A   0x2B   0x2C   0x2D   0x2E   0x2F
+			 0x09   0x09   0x09>;
+		phy_data_revA = /bits/ 16
+			<0x4008 0xE04A 0x6046 0x27F1 0x52F5 0x2AD3 0x000E 0x2E00 0x3591 0x521C 0xA600 0xA905 0xC000 0xEF1C 0x2000 0x0000
+			 0x000C 0x4C00 0xFC00 0x0C81 0xDE01 0x0000 0x0000 0x0000 0x0000 0x4004 0x1260 0xFF00 0xCB00 0xA03F 0xC2E0 0x2807
+			 0x9424 0x284A 0x0057 0xAB66 0x0800 0x0000 0x040A 0x01D6 0xF802 0x3080 0x3082 0x2078 0xFFFF 0xFFFF 0x0000 0x0040
+			 0x521C 0x501C 0x521C>;
+
+		status = "okay";
+	};
+
+	dwc3_u3host_usb2phy: dwc3_u3host_usb2phy {
+		phy_data_page0_size = <9>;
+		phy_data_page0_addr = /bits/ 8 <0xE0 0xE1 0xE2 0xE3 0xE4 0xE5 0xE6 0xE7 0xF5>;
+		phy_data_page0_data = /bits/ 8 <0xE0 0x30 0x3A 0x8D 0x66 0x65 0x91 0x81 0x81>;
+		phy_data_page1_size = <8>;
+		phy_data_page1_addr = /bits/ 8 <0xE0 0xE1 0xE2 0xE3 0xE4 0xE5 0xE6 0xE7>;
+		phy_data_page1_data = /bits/ 8 <0x25 0x6F 0x60 0x00 0x00 0x0F 0x18 0xE3>;
+
+		status = "okay";
+	};
+
+	dwc3_u3host: rtk_dwc3_u3host@98013E00 {
+		status = "okay";
+		dwc3_u3host@981F0000 {
+			compatible = "synopsys,dwc3";
+		};
+	};
+};

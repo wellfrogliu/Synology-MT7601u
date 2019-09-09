@@ -1,0 +1,34 @@
+* EHCI controller, Orion Marvell variants
+
+Required properties:
+- compatible: could be one of the followings
+	"marvell,orion-ehci"
+	"marvell,armada-3700-ehci"
+- reg: physical base address of the controller and length of memory mapped
+  region.
+- interrupts: The EHCI interrupt
+
+Optional properties:
+- clocks: reference to the clock
+- phys: reference to the USB PHY
+- phy-names: name of the USB PHY, should be "usb"
+- needs-reset-on-resume: boolean, set this to force EHCI reset after resume,
+  for example, Armada 3700 should force EHCI reset after resume to insure
+  data traffic continuity
+
+Examples:
+
+	ehci@50000 {
+		compatible = "marvell,orion-ehci";
+		reg = <0x50000 0x1000>;
+		interrupts = <19>;
+	};
+
+	usb@5e000 {
+		compatible = "marvell,armada-3700-ehci";
+		reg = <0x5e000 0x1000>;
+		interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
+		phys = <&utmi_usb2>;
+		phy-names = "usb";
+		needs-reset-on-resume;
+	};

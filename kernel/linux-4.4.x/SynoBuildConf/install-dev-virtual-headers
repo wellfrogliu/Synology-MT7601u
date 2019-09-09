@@ -1,0 +1,20 @@
+#!/bin/bash
+# Copyright (c) 2000-2015 Synology Inc. All rights reserved.
+# vim:ft=sh
+
+for _inc in $ToolChainInclude32 $ToolChainInclude64 $StaticInclude32 $StaticInclude64; do
+	for _kinc in $(ls usr/include/); do
+		mkdir -p "${DebDevBuild}/$_inc/$_kinc" ${DebDevBuild}/DEBIAN/ &>/dev/null
+		echo "rm -rf \"$_inc/$_kinc\"" >> ${DebDevBuild}/DEBIAN/preinst
+		# avoid copy .install flag files
+
+		cp -a usr/include/$_kinc/* "${DebDevBuild}/$_inc/$_kinc"
+	done
+done
+
+if Is64BitPlatform; then
+	# Avoid lib64 link be removed by dpkg, we create a directory when install header.
+	# While dpkg remove lib64, it will check if any project has this file(dir)
+	ln -sf lib $DebDevBuild/$ToolChainSysRoot64/usr/lib64
+	ln -sf lib $DebDevBuild/$ToolChainSysRoot64/usr/lib32
+fi

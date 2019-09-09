@@ -1,0 +1,9 @@
+config RTK_THERMAL
+    tristate "Realtek thermal management"
+    depends on OF
+    default y
+
+config RTK_THERMAL_CPU_CORE_COOLING
+    tristate "Realtek cpu_core cooling"
+    depends on RTK_THERMAL && HOTPLUG_CPU
+    default y

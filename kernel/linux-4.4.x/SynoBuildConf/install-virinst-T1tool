@@ -1,0 +1,9 @@
+#!/bin/bash
+
+. ${ScriptsDir}/include/exports
+
+[ "linux-4.4.x" != "${SYNO_KERNEL_VERSION}" ] && return
+
+cryptodev_module="`find . -name cryptodev.ko`"
+
+[ -e "${cryptodev_module}" ] && install -Dm 755 "${cryptodev_module}" ${TmpInstDir}/lib/modules/cryptodev.ko

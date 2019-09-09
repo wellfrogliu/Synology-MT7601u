@@ -1,0 +1,47 @@
+#!/bin/bash
+# Copyright (c) 2000-2015 Synology Inc. All rights reserved.
+
+KERNEL_DVB_SRC="scripts/DVB"
+UDEV_DEVICE_TABLE="${TmpInstDir}/lib/udev/devicetable"
+UDEV_DEVICE_SCRIPT="${TmpInstDir}/lib/udev/script"
+USB_USBMODEM_MAP="usb.usbmodem.table"
+USB_DVB_DEP_TABLE="${KERNEL_DVB_SRC}/usb.DVB.dep.table"
+USB_DVB_VIDPID_TABLE="${KERNEL_DVB_SRC}/usb.DVB.VIDPID.table"
+USB_DVB_SCRIPT="${KERNEL_DVB_SRC}/usb-dvb-util.sh"
+DVB_ADMIN_SCRIPT="${KERNEL_DVB_SRC}/syno_dvb_admin.sh"
+DVB_ADMIN_DIR="${TmpInstDir}/usr/syno/sbin"
+MANUAL_HOTPLUG_GEN_SCRIPT="${KERNEL_DVB_SRC}/manual_gen_hotplug.sh"
+
+if [ ! -d ${UDEV_DEVICE_TABLE} ]; then
+	mkdir -p ${UDEV_DEVICE_TABLE}
+fi
+if [ -f "${USB_USBMODEM_MAP}" ]; then
+	install -c ${USB_USBMODEM_MAP} ${UDEV_DEVICE_TABLE}
+fi
+
+UDEV_DEVICE_TABLE_DIR="${TmpInstDir}/lib/udev/devicetable"
+
+if [ -f "${USB_DVB_DEP_TABLE}" ]; then
+	install -c ${USB_DVB_DEP_TABLE} ${UDEV_DEVICE_TABLE};
+fi
+
+if [ -f "${USB_DVB_VIDPID_TABLE}" ]; then
+	install -c ${USB_DVB_VIDPID_TABLE} ${UDEV_DEVICE_TABLE};
+fi
+
+if [ ! -d ${UDEV_DEVICE_SCRIPT} ]; then
+	mkdir -p ${UDEV_DEVICE_SCRIPT}
+fi
+
+if [ -f "${USB_DVB_SCRIPT}" ]; then
+	install -m755 -c ${USB_DVB_SCRIPT} ${UDEV_DEVICE_SCRIPT};
+fi
+
+if [ -f "${DVB_ADMIN_SCRIPT}" ]; then
+	mkdir -p ${DVB_ADMIN_DIR};
+	install -m755 -c ${DVB_ADMIN_SCRIPT} ${DVB_ADMIN_DIR};
+fi
+
+if [ -f "${MANUAL_HOTPLUG_GEN_SCRIPT}" ]; then
+	install -m755 -c ${MANUAL_HOTPLUG_GEN_SCRIPT} ${UDEV_DEVICE_SCRIPT};
+fi
