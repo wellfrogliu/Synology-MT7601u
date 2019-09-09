@@ -16,8 +16,8 @@ $ ifconfig
 ```
 then the wlan0 will get ip
 
-#build
-##if you want compile other so, you need compile kernel, I use Ubuntu 14.04
+# build
+## if you want compile other so, you need compile kernel, I use Ubuntu 14.04
 ```shell
 $ sudo export CC=/your_path/x86_64-pc-linux-gnu/bin/x86_64-pc-linux-gnu-gcc
 $ sudo export RANLIB=/your_path/x86_64-pc-linux-gnu/bin/x86_64-pc-linux-gnu-ranlib
@@ -34,5 +34,5 @@ $ make modules_install INSTALL_MOD_PATH=./modules
 ```
 you can find so in modules folder
 
-##if your Synology device was not DS918+ 
+## if your Synology device was not DS918+ 
 you need download your kernel and toolchain, then compile like above.
