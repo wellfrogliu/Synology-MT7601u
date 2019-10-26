@@ -9,8 +9,9 @@ you can copy  wireless folder into /lib/modules.
 $ unzip Synology-MT7601u-master.zip
 $ cd Synology-MT7601u-master/output
 $ cp ./wireless /lib/modules
+$ cp ./mt7601u.bin /lib/firmware
 $ sudo mkdir /etc/wpa_supplicant/
-$ sudo wpa_passphrase SSID passphrase > /etc/wpa_supplicant/wpa_supplicant.conf
+$ sudo wpa_passphrase SSID passphrase > /etc/wpa_supplicant/wpa_supplicant.conf   //SSID is  your wifi name， passphrase is your wifi passwd
 $ sudo ./mt7601u_start.sh
 $ ifconfig
 ```
